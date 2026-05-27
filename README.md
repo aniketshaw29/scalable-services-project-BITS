@@ -222,6 +222,6 @@ See [DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) for the full phased plan.
 | 5 | ✅ Done | Attendance Service (12 tests) + Certificate Service (10 tests, PDFBox PDF) |
 | 6 | ✅ Done | Feedback Service (12 tests) + Leaderboard Service (11 tests) + Announcement Service (10 tests) |
 | 7 | ✅ Done | Resource Service (11 tests, file upload/download) + Sponsor Service (12 tests, event linking) |
-| 8 | 🔲 Next | Docker Compose containerization |
+| 8 | ✅ Done | Docker Compose — 14 Dockerfiles, docker-compose.yml with 12 PostgreSQL DBs, RabbitMQ, all services, healthchecks, named volumes |
 | 9 | 🔲 | Kubernetes deployment |
 | 10 | 🔲 | Frontend Dashboard |

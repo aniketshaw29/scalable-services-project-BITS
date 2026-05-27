@@ -1,0 +1,561 @@
+version: '3.8'
+
+networks:
+  campus-network:
+    driver: bridge
+
+volumes:
+  rabbitmq-data:
+  event-db-data:
+  registration-db-data:
+  venue-db-data:
+  attendance-db-data:
+  ticket-db-data:
+  notification-db-data:
+  certificate-db-data:
+  feedback-db-data:
+  leaderboard-db-data:
+  announcement-db-data:
+  resource-db-data:
+  sponsor-db-data:
+  resource-uploads:
+
+services:
+
+  # ─── Infrastructure ────────────────────────────────────────────────────────
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - campus-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Databases ─────────────────────────────────────────────────────────────
+
+  event-db:
+    image: postgres:15-alpine
+    container_name: event-db
+    environment:
+      POSTGRES_DB: event_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - event-db-data:/var/lib/postgresql/data
+    networks:
+      - campus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d event_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  registration-db:
+    image: postgres:15-alpine
+    container_name: registration-db
+    environment:
+      POSTGRES_DB: registration_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - registration-db-data:/var/lib/postgresql/data
+    networks:
+      - campus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d registration_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  venue-db:
+    image: postgres:15-alpine
+    container_name: venue-db
+    environment:
+      POSTGRES_DB: venue_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - venue-db-data:/var/lib/postgresql/data
+    networks:
+      - campus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d venue_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  attendance-db:
+    image: postgres:15-alpine
+    container_name: attendance-db
+    environment:
+      POSTGRES_DB: attendance_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - attendance-db-data:/var/lib/postgresql/data
+    networks:
+      - campus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d attendance_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ticket-db:
+    image: postgres:15-alpine
+    container_name: ticket-db
+    environment:
+      POSTGRES_DB: ticket_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ticket-db-data:/var/lib/postgresql/data
+    networks:
+      - campus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ticket_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  notification-db:
+    image: postgres:15-alpine
+    container_name: notification-db
+    environment:
+      POSTGRES_DB: notification_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - notification-db-data:/var/lib/postgresql/data
+    networks:
+      - campus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d notification_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  certificate-db:
+    image: postgres:15-alpine
+    container_name: certificate-db
+    environment:
+      POSTGRES_DB: certificate_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - certificate-db-data:/var/lib/postgresql/data
+    networks:
+      - campus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d certificate_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  feedback-db:
+    image: postgres:15-alpine
+    container_name: feedback-db
+    environment:
+      POSTGRES_DB: feedback_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - feedback-db-data:/var/lib/postgresql/data
+    networks:
+      - campus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d feedback_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  leaderboard-db:
+    image: postgres:15-alpine
+    container_name: leaderboard-db
+    environment:
+      POSTGRES_DB: leaderboard_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - leaderboard-db-data:/var/lib/postgresql/data
+    networks:
+      - campus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d leaderboard_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  announcement-db:
+    image: postgres:15-alpine
+    container_name: announcement-db
+    environment:
+      POSTGRES_DB: announcement_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - announcement-db-data:/var/lib/postgresql/data
+    networks:
+      - campus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d announcement_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  resource-db:
+    image: postgres:15-alpine
+    container_name: resource-db
+    environment:
+      POSTGRES_DB: resource_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - resource-db-data:/var/lib/postgresql/data
+    networks:
+      - campus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d resource_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  sponsor-db:
+    image: postgres:15-alpine
+    container_name: sponsor-db
+    environment:
+      POSTGRES_DB: sponsor_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - sponsor-db-data:/var/lib/postgresql/data
+    networks:
+      - campus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sponsor_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Service Registry ──────────────────────────────────────────────────────
+
+  eureka-server:
+    build:
+      context: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "4070:4070"
+    environment:
+      SERVER_PORT: 4070
+      EUREKA_HOSTNAME: eureka-server
+    networks:
+      - campus-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4070/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ─── API Gateway ───────────────────────────────────────────────────────────
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "4069:4069"
+    environment:
+      EUREKA_URL: http://eureka-server:4070/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - campus-network
+
+  # ─── Business Services ─────────────────────────────────────────────────────
+
+  event-service:
+    build:
+      context: ./event-service
+    container_name: event-service
+    ports:
+      - "4071:4071"
+    environment:
+      DB_URL: jdbc:postgresql://event-db:5432/event_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      EUREKA_URL: http://eureka-server:4070/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      event-db:
+        condition: service_healthy
+    networks:
+      - campus-network
+
+  registration-service:
+    build:
+      context: ./registration-service
+    container_name: registration-service
+    ports:
+      - "4072:4072"
+    environment:
+      DB_URL: jdbc:postgresql://registration-db:5432/registration_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      EUREKA_URL: http://eureka-server:4070/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      registration-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - campus-network
+
+  venue-service:
+    build:
+      context: ./venue-service
+    container_name: venue-service
+    ports:
+      - "4073:4073"
+    environment:
+      DB_URL: jdbc:postgresql://venue-db:5432/venue_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      EUREKA_URL: http://eureka-server:4070/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      venue-db:
+        condition: service_healthy
+    networks:
+      - campus-network
+
+  attendance-service:
+    build:
+      context: ./attendance-service
+    container_name: attendance-service
+    ports:
+      - "4074:4074"
+    environment:
+      DB_URL: jdbc:postgresql://attendance-db:5432/attendance_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      EUREKA_URL: http://eureka-server:4070/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      attendance-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - campus-network
+
+  ticket-service:
+    build:
+      context: ./ticket-service
+    container_name: ticket-service
+    ports:
+      - "4075:4075"
+    environment:
+      DB_URL: jdbc:postgresql://ticket-db:5432/ticket_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      EUREKA_URL: http://eureka-server:4070/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      ticket-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - campus-network
+
+  notification-service:
+    build:
+      context: ./notification-service
+    container_name: notification-service
+    ports:
+      - "4076:4076"
+    environment:
+      DB_URL: jdbc:postgresql://notification-db:5432/notification_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      EUREKA_URL: http://eureka-server:4070/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      notification-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - campus-network
+
+  certificate-service:
+    build:
+      context: ./certificate-service
+    container_name: certificate-service
+    ports:
+      - "4077:4077"
+    environment:
+      DB_URL: jdbc:postgresql://certificate-db:5432/certificate_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      EUREKA_URL: http://eureka-server:4070/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      certificate-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - campus-network
+
+  feedback-service:
+    build:
+      context: ./feedback-service
+    container_name: feedback-service
+    ports:
+      - "4078:4078"
+    environment:
+      DB_URL: jdbc:postgresql://feedback-db:5432/feedback_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      EUREKA_URL: http://eureka-server:4070/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      feedback-db:
+        condition: service_healthy
+    networks:
+      - campus-network
+
+  leaderboard-service:
+    build:
+      context: ./leaderboard-service
+    container_name: leaderboard-service
+    ports:
+      - "4079:4079"
+    environment:
+      DB_URL: jdbc:postgresql://leaderboard-db:5432/leaderboard_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      EUREKA_URL: http://eureka-server:4070/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      leaderboard-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - campus-network
+
+  announcement-service:
+    build:
+      context: ./announcement-service
+    container_name: announcement-service
+    ports:
+      - "4080:4080"
+    environment:
+      DB_URL: jdbc:postgresql://announcement-db:5432/announcement_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      EUREKA_URL: http://eureka-server:4070/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      announcement-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - campus-network
+
+  resource-service:
+    build:
+      context: ./resource-service
+    container_name: resource-service
+    ports:
+      - "4081:4081"
+    environment:
+      DB_URL: jdbc:postgresql://resource-db:5432/resource_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      EUREKA_URL: http://eureka-server:4070/eureka/
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - resource-uploads:/app/uploads
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      resource-db:
+        condition: service_healthy
+    networks:
+      - campus-network
+
+  sponsor-service:
+    build:
+      context: ./sponsor-service
+    container_name: sponsor-service
+    ports:
+      - "4082:4082"
+    environment:
+      DB_URL: jdbc:postgresql://sponsor-db:5432/sponsor_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      EUREKA_URL: http://eureka-server:4070/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      sponsor-db:
+        condition: service_healthy
+    networks:
+      - campus-network

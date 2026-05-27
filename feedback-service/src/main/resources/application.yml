@@ -5,9 +5,9 @@ spring:
   application:
     name: feedback-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/feedback_db
-    username: postgres
-    password: postgres
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/feedback_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -20,6 +20,12 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:4070/eureka/
+      defaultZone: ${EUREKA_URL:http://localhost:4070/eureka/}
   instance:
     prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

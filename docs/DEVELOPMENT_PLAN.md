@@ -16,7 +16,7 @@ Each phase is self-contained with a clear scope, implementation checklist, and t
 | 5 | ✅ DONE | Attendance + Certificate | Attendance, Certificate | Full student lifecycle complete |
 | 6 | ✅ DONE | Engagement Layer | Feedback, Leaderboard, Announcement | Event engagement features complete |
 | 7 | ✅ DONE | Utility Services | Resource Upload, Sponsor | Supporting features complete |
-| 8 | 🔲 TODO | Containerization | All services | docker-compose up brings everything up |
+| 8 | ✅ DONE | Containerization | All services | docker-compose up brings everything up |
 | 9 | 🔲 TODO | Kubernetes | All services | kubectl apply deploys full system |
 | 10 | 🔲 TODO | Frontend Dashboard | React/Thymeleaf | End-to-end demo via UI |
 
@@ -487,14 +487,14 @@ GET   /api/sponsors/event/{eventId}        → Sponsors for an event (with contr
 
 ---
 
-## Phase 8 — Containerization
+## Phase 8 — Containerization ✅
 
 **Goal:** `docker-compose up` starts the entire system with one command.
 
-### What to Build
+### What Was Built
 
-#### 8.1 Dockerfile (per service)
-Each service gets a multi-stage Dockerfile:
+#### 8.1 Dockerfiles (14 services)
+Each service has a multi-stage `Dockerfile` at its root:
 ```dockerfile
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
@@ -507,33 +507,35 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
+Services: eureka-server, api-gateway, event-service, registration-service, venue-service, attendance-service, ticket-service, notification-service, certificate-service, feedback-service, leaderboard-service, announcement-service, resource-service, sponsor-service.
 
 #### 8.2 Docker Compose (`docker-compose.yml`)
-Services:
-- `rabbitmq` — `rabbitmq:3.12-management`
-- `postgres-event`, `postgres-registration`, ..., `postgres-sponsor` (12 PostgreSQL instances)
-- `eureka-server`
-- `api-gateway` (depends on eureka)
-- All 12 business services (depend on their DB + eureka)
-
-Networks: `campus-network` (bridge)
-Volumes: One named volume per PostgreSQL instance
+- `rabbitmq` — `rabbitmq:3.12-management` (ports 5672, 15672) with healthcheck
+- 12 PostgreSQL 15 instances (one per service) with healthchecks and named volumes
+- `eureka-server` with healthcheck (curl actuator/health)
+- `api-gateway` — depends on eureka healthy
+- All 12 business services — depend on their DB + eureka healthy; RabbitMQ services also depend on rabbitmq healthy
+- `resource-service` — mounts `resource-uploads` named volume at `/app/uploads`
+- Network: `campus-network` (bridge)
+- Volumes: one named volume per PostgreSQL DB + `resource-uploads` + `rabbitmq-data`
 
 #### 8.3 Environment configuration
-Each service's `application.yml` uses environment variables:
+All 14 `application.yml` files use `${VAR:default}` pattern:
 ```yaml
 spring:
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/event_db}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/<service>_db}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
 eureka:
   client:
-    serviceUrl:
-      defaultZone: ${EUREKA_URL:http://localhost:4070/eureka}
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:4070/eureka/}
 ```
+Eureka server additionally uses `${SERVER_PORT:4070}` and `${EUREKA_HOSTNAME:localhost}`.
 
 ### Test Criteria
 - [ ] `docker-compose up --build` starts all containers without error

@@ -1,5 +1,5 @@
 server:
-  port: 4070
+  port: ${SERVER_PORT:4070}
 
 spring:
   application:
@@ -7,7 +7,7 @@ spring:
 
 eureka:
   instance:
-    hostname: localhost
+    hostname: ${EUREKA_HOSTNAME:localhost}
   client:
     register-with-eureka: false
     fetch-registry: false

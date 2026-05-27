@@ -5,9 +5,9 @@ spring:
   application:
     name: certificate-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/certificate_db
-    username: postgres
-    password: postgres
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/certificate_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -17,14 +17,20 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
     show-sql: false
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:4070/eureka/
+      defaultZone: ${EUREKA_URL:http://localhost:4070/eureka/}
   instance:
     prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

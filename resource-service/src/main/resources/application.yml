@@ -5,9 +5,9 @@ spring:
   application:
     name: resource-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/resource_db
-    username: postgres
-    password: postgres
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/resource_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -22,12 +22,18 @@ spring:
       max-request-size: 10MB
 
 resource:
-  upload-dir: uploads
+  upload-dir: ${UPLOAD_DIR:uploads}
   max-file-size-mb: 10
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:4070/eureka/
+      defaultZone: ${EUREKA_URL:http://localhost:4070/eureka/}
   instance:
     prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
