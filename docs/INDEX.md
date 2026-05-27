@@ -8,6 +8,7 @@ Complete documentation for the Campus EventHub microservices platform.
 
 | Guide | Description |
 |-------|-------------|
+| [Install Prerequisites](INSTALL.md) | Install Java, Maven, PostgreSQL, RabbitMQ on macOS/Linux/Windows |
 | [Running Locally](RUNNING_LOCALLY.md) | Run all services on your machine without Docker |
 | [Docker Compose](DOCKER.md) | Spin up the entire stack with one command |
 
