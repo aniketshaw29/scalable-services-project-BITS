@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: event-service
+          uri: lb://event-service
+          predicates:
+            - Path=/api/events/**
+        - id: registration-service
+          uri: lb://registration-service
+          predicates:
+            - Path=/api/registrations/**
+        - id: venue-service
+          uri: lb://venue-service
+          predicates:
+            - Path=/api/venues/**
+        - id: attendance-service
+          uri: lb://attendance-service
+          predicates:
+            - Path=/api/attendance/**
+        - id: ticket-service
+          uri: lb://ticket-service
+          predicates:
+            - Path=/api/tickets/**
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**
+        - id: certificate-service
+          uri: lb://certificate-service
+          predicates:
+            - Path=/api/certificates/**
+        - id: feedback-service
+          uri: lb://feedback-service
+          predicates:
+            - Path=/api/feedback/**
+        - id: leaderboard-service
+          uri: lb://leaderboard-service
+          predicates:
+            - Path=/api/leaderboard/**
+        - id: announcement-service
+          uri: lb://announcement-service
+          predicates:
+            - Path=/api/announcements/**
+        - id: resource-service
+          uri: lb://resource-service
+          predicates:
+            - Path=/api/resources/**
+        - id: sponsor-service
+          uri: lb://sponsor-service
+          predicates:
+            - Path=/api/sponsors/**
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false

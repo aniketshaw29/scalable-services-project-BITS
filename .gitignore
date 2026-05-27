@@ -1,0 +1,25 @@
+# Maven
+target/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+
+# Spring Boot
+*.log
+logs/
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads (resource service)
+uploads/

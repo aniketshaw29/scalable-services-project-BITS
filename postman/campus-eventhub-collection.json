@@ -1,0 +1,1393 @@
+{
+  "info": {
+    "_postman_id": "campus-eventhub-collection",
+    "name": "Campus EventHub — All Services",
+    "description": "Complete API collection for Campus EventHub microservices.\n\nImport the environment file `campus-eventhub-environment.json` alongside this collection.\n\n**Demo flow order:**\n1. Infrastructure — verify Eureka + Gateway\n2. Venue Service — create venue\n3. Event Service — create event, assign venue\n4. Registration Service — register student\n5. Ticket Service — fetch QR pass\n6. Notification Service — verify notification logged\n7. Attendance Service — mark attendance\n8. Certificate Service — download certificate\n9. Feedback Service — submit feedback\n10. Leaderboard Service — publish results\n11. Announcement Service — create announcement\n12. Resource Service — upload file\n13. Sponsor Service — add sponsor",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "{{baseUrl}}" }
+  ],
+  "item": [
+
+    {
+      "name": "00 — Infrastructure",
+      "item": [
+        {
+          "name": "Eureka Health",
+          "request": {
+            "method": "GET",
+            "url": "{{eurekaUrl}}/actuator/health",
+            "description": "Verify Eureka Server is UP"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status is UP', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('UP');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gateway Health",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/actuator/health",
+            "description": "Verify API Gateway is UP"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status is UP', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('UP');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eureka Registered Apps",
+          "request": {
+            "method": "GET",
+            "url": "{{eurekaUrl}}/eureka/apps",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "description": "List all services registered in Eureka"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "01 — Event Service",
+      "item": [
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/events",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Spring Boot Workshop\",\n  \"description\": \"Hands-on Spring Boot microservices workshop\",\n  \"eventDate\": \"2024-08-15T10:00:00\",\n  \"endDate\": \"2024-08-15T17:00:00\",\n  \"category\": \"WORKSHOP\",\n  \"maxCapacity\": 50\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Has id', () => pm.expect(pm.response.json()).to.have.property('id'));",
+                  "pm.test('Status is UPCOMING', () => pm.expect(pm.response.json().status).to.eql('UPCOMING'));",
+                  "pm.environment.set('eventId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Events",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/events"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Event by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/events/{{eventId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Correct event returned', () => {",
+                  "  pm.expect(pm.response.json().id).to.eql(Number(pm.environment.get('eventId')));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Events by Status — UPCOMING",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/events/status/UPCOMING"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('All events are UPCOMING', () => {",
+                  "  pm.response.json().forEach(e => pm.expect(e.status).to.eql('UPCOMING'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Event",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/events/{{eventId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Spring Boot Workshop — Updated\",\n  \"maxCapacity\": 60\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Title updated', () => pm.expect(pm.response.json().title).to.include('Updated'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Event by ID — 404",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/events/99999"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Event",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/events/{{eventId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "02 — Venue Service",
+      "item": [
+        {
+          "name": "Create Venue",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/venues",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Main Auditorium\",\n  \"location\": \"Block A, Ground Floor\",\n  \"capacity\": 500,\n  \"type\": \"AUDITORIUM\",\n  \"facilities\": \"Projector, Sound System, AC\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Has id', () => pm.expect(pm.response.json()).to.have.property('id'));",
+                  "pm.environment.set('venueId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Venues",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/venues"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Venue by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/venues/{{venueId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Correct venue returned', () => {",
+                  "  pm.expect(pm.response.json().id).to.eql(Number(pm.environment.get('venueId')));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check Venue Availability",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/venues/{{venueId}}/availability?startTime=2024-08-15T09:00:00&endTime=2024-08-15T18:00:00",
+              "query": [
+                { "key": "startTime", "value": "2024-08-15T09:00:00" },
+                { "key": "endTime",   "value": "2024-08-15T18:00:00" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has available field', () => pm.expect(pm.response.json()).to.have.property('available'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book Venue for Event",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/venues/{{venueId}}/book",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": {{eventId}},\n  \"startTime\": \"2024-08-15T09:00:00\",\n  \"endTime\": \"2024-08-15T18:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Booking status is BOOKED', () => pm.expect(pm.response.json().status).to.eql('BOOKED'));",
+                  "pm.environment.set('bookingId', pm.response.json().bookingId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Book Same Slot Again — 409 Conflict",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/venues/{{venueId}}/book",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": 999,\n  \"startTime\": \"2024-08-15T09:00:00\",\n  \"endTime\": \"2024-08-15T18:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Venue for Event",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/venues/event/{{eventId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/venues/bookings/{{bookingId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "03 — Registration Service",
+      "item": [
+        {
+          "name": "Register Student",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/registrations",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"studentName\": \"Alice Johnson\",\n  \"studentEmail\": \"alice@college.edu\",\n  \"eventId\": {{eventId}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Status is ACTIVE', () => pm.expect(pm.response.json().status).to.eql('ACTIVE'));",
+                  "pm.environment.set('registrationId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register Same Student Again — 409",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/registrations",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"studentName\": \"Alice Johnson\",\n  \"studentEmail\": \"alice@college.edu\",\n  \"eventId\": {{eventId}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Registration by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/registrations/{{registrationId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Correct id', () => pm.expect(pm.response.json().id).to.eql(Number(pm.environment.get('registrationId'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Registrations for Event",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/registrations/event/{{eventId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "pm.test('At least 1 registration', () => pm.expect(pm.response.json().length).to.be.gte(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Student Registrations",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/registrations/student/{{studentId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check Registration Exists",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/registrations/{{registrationId}}/exists"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('exists is true', () => pm.expect(pm.response.json().exists).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel Registration",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/registrations/{{registrationId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "04 — Ticket Service",
+      "item": [
+        {
+          "name": "Get Ticket for Registration",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tickets/registration/{{registrationId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has qrCode', () => pm.expect(pm.response.json()).to.have.property('qrCode'));",
+                  "pm.test('Status is VALID', () => pm.expect(pm.response.json().status).to.eql('VALID'));",
+                  "pm.environment.set('ticketId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validate Ticket",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tickets/{{ticketId}}/validate"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Ticket is valid', () => pm.expect(pm.response.json().valid).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark Ticket as Used",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/tickets/{{ticketId}}/mark-used"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Status is USED', () => pm.expect(pm.response.json().status).to.eql('USED'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validate Used Ticket — Not Valid",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tickets/{{ticketId}}/validate"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Ticket is no longer valid', () => pm.expect(pm.response.json().valid).to.be.false);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "05 — Notification Service",
+      "item": [
+        {
+          "name": "Get Student Notifications",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/notifications/student/{{studentId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "if (pm.response.json().length > 0) {",
+                  "  pm.environment.set('notificationId', pm.response.json()[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Notification by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/notifications/{{notificationId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filter Notifications by Type — REGISTRATION",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/notifications/type/REGISTRATION"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "06 — Attendance Service",
+      "item": [
+        {
+          "name": "Mark Attendance",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/attendance",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationId\": {{registrationId}},\n  \"studentId\": \"{{studentId}}\",\n  \"eventId\": {{eventId}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Status is PRESENT', () => pm.expect(pm.response.json().status).to.eql('PRESENT'));",
+                  "pm.environment.set('attendanceId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark Attendance Again — 409",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/attendance",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationId\": {{registrationId}},\n  \"studentId\": \"{{studentId}}\",\n  \"eventId\": {{eventId}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Attendees for Event",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/attendance/event/{{eventId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Student Attendance History",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/attendance/student/{{studentId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check Attendance Status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/attendance/{{registrationId}}/status"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('present is true', () => pm.expect(pm.response.json().present).to.be.true);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "07 — Certificate Service",
+      "item": [
+        {
+          "name": "List Student Certificates",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/certificates/student/{{studentId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "if (pm.response.json().length > 0) {",
+                  "  pm.environment.set('certificateId', pm.response.json()[0].id);",
+                  "  pm.environment.set('certificateNumber', pm.response.json()[0].certificateNumber);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Download Certificate PDF",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/certificates/{{certificateId}}/download"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Content-Type is PDF', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify Certificate",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/certificates/verify/{{certificateNumber}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('valid is true', () => pm.expect(pm.response.json().valid).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify Fake Certificate — 404",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/certificates/verify/CERT-FAKE-0000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "08 — Feedback Service",
+      "item": [
+        {
+          "name": "Submit Feedback",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/feedback",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"eventId\": {{eventId}},\n  \"rating\": 5,\n  \"comment\": \"Excellent workshop, very hands-on!\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Rating is 5', () => pm.expect(pm.response.json().rating).to.eql(5));",
+                  "pm.environment.set('feedbackId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit Duplicate Feedback — 409",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/feedback",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"eventId\": {{eventId}},\n  \"rating\": 3,\n  \"comment\": \"Duplicate\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 409 Conflict', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Feedback for Event",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/feedback/event/{{eventId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Feedback Summary",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/feedback/event/{{eventId}}/summary"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has averageRating', () => pm.expect(pm.response.json()).to.have.property('averageRating'));",
+                  "pm.test('Has totalResponses', () => pm.expect(pm.response.json()).to.have.property('totalResponses'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Student Feedback History",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/feedback/student/{{studentId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "09 — Leaderboard Service",
+      "item": [
+        {
+          "name": "Publish Results",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/leaderboard/results",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": {{eventId}},\n  \"eventTitle\": \"Spring Boot Workshop\",\n  \"results\": [\n    { \"studentId\": \"STU-001\", \"studentName\": \"Alice Johnson\", \"position\": 1, \"category\": \"Overall\", \"points\": 100 },\n    { \"studentId\": \"STU-002\", \"studentName\": \"Bob Smith\", \"position\": 2, \"category\": \"Overall\", \"points\": 80 },\n    { \"studentId\": \"STU-003\", \"studentName\": \"Carol White\", \"position\": 3, \"category\": \"Overall\", \"points\": 60 }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('published is true', () => pm.expect(pm.response.json().published).to.be.true);",
+                  "pm.test('count is 3', () => pm.expect(pm.response.json().count).to.eql(3));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Rankings for Event",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/leaderboard/event/{{eventId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "pm.test('First place is position 1', () => pm.expect(pm.response.json()[0].position).to.eql(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Student Achievements",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/leaderboard/student/{{studentId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Top Performers",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/leaderboard/top?limit=10",
+              "query": [{ "key": "limit", "value": "10" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "10 — Announcement Service",
+      "item": [
+        {
+          "name": "Create Announcement",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/announcements",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Venue Change Notice\",\n  \"content\": \"The venue for Spring Boot Workshop has been changed to Room 301, Block B.\",\n  \"eventId\": {{eventId}},\n  \"type\": \"VENUE_CHANGE\",\n  \"publishedBy\": \"admin\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Has id', () => pm.expect(pm.response.json()).to.have.property('id'));",
+                  "pm.environment.set('announcementId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Announcements",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/announcements"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Announcements for Event",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/announcements/event/{{eventId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Announcement by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/announcements/{{announcementId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "11 — Resource Service",
+      "item": [
+        {
+          "name": "Upload File",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/resources/upload",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "eventId",     "value": "{{eventId}}",      "type": "text" },
+                { "key": "uploadedBy",  "value": "{{studentId}}",    "type": "text" },
+                { "key": "description", "value": "Workshop slides",  "type": "text" },
+                { "key": "file",        "type": "file", "src": "" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Has downloadUrl', () => pm.expect(pm.response.json()).to.have.property('downloadUrl'));",
+                  "pm.environment.set('resourceId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Resources for Event",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/resources/event/{{eventId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Download File",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/resources/{{resourceId}}/download"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Resource",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/resources/{{resourceId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "12 — Sponsor Service",
+      "item": [
+        {
+          "name": "Add Sponsor",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/sponsors",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"TechCorp\",\n  \"logoUrl\": \"https://techcorp.com/logo.png\",\n  \"website\": \"https://techcorp.com\",\n  \"tier\": \"GOLD\",\n  \"contactPerson\": \"John Doe\",\n  \"contactEmail\": \"john@techcorp.com\",\n  \"description\": \"Leading technology company\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Has id', () => pm.expect(pm.response.json()).to.have.property('id'));",
+                  "pm.environment.set('sponsorId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Sponsors",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/sponsors"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'))."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Sponsor by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/sponsors/{{sponsorId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Sponsor",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/sponsors/{{sponsorId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tier\": \"PLATINUM\",\n  \"description\": \"Platinum sponsor for all events\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Tier updated to PLATINUM', () => pm.expect(pm.response.json().tier).to.eql('PLATINUM'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Link Sponsor to Event",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/sponsors/{{sponsorId}}/events/{{eventId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contribution\": 50000.00,\n  \"notes\": \"Primary sponsor for refreshments\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Sponsors for Event",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/sponsors/event/{{eventId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "13 — Circuit Breaker Demo",
+      "item": [
+        {
+          "name": "Register with Event Service DOWN",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/registrations",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"STU-CB-TEST\",\n  \"studentName\": \"Circuit Breaker Test\",\n  \"studentEmail\": \"cbtest@college.edu\",\n  \"eventId\": {{eventId}}\n}"
+            },
+            "description": "Stop the event-service before sending this.\nExpected: 503 with circuit breaker fallback message."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Circuit breaker returns 503', () => pm.response.to.have.status(503));",
+                  "pm.test('Fallback message present', () => {",
+                  "  pm.expect(pm.response.json().error).to.include('unavailable');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "campus-eventhub-env",
+  "name": "Campus EventHub — Local",
+  "_postman_variable_scope": "environment",
+  "values": [
+    { "key": "baseUrl",      "value": "http://localhost:4069", "enabled": true },
+    { "key": "eurekaUrl",    "value": "http://localhost:4070", "enabled": true },
+    { "key": "eventId",      "value": "1",                    "enabled": true },
+    { "key": "venueId",      "value": "1",                    "enabled": true },
+    { "key": "bookingId",    "value": "1",                    "enabled": true },
+    { "key": "registrationId", "value": "1",                  "enabled": true },
+    { "key": "attendanceId", "value": "1",                    "enabled": true },
+    { "key": "ticketId",     "value": "1",                    "enabled": true },
+    { "key": "notificationId", "value": "1",                  "enabled": true },
+    { "key": "certificateId", "value": "1",                   "enabled": true },
+    { "key": "certificateNumber", "value": "CERT-2024-001",   "enabled": true },
+    { "key": "feedbackId",   "value": "1",                    "enabled": true },
+    { "key": "announcementId", "value": "1",                  "enabled": true },
+    { "key": "resourceId",   "value": "1",                    "enabled": true },
+    { "key": "sponsorId",    "value": "1",                    "enabled": true },
+    { "key": "studentId",    "value": "STU-001",              "enabled": true }
+  ]
+}
