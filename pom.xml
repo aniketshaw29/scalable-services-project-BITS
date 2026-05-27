@@ -23,7 +23,9 @@
         <!-- Phase 1: Infrastructure -->
         <module>eureka-server</module>
         <module>api-gateway</module>
-        <!-- Phase 2: event-service, venue-service -->
+        <!-- Phase 2: Core domain services -->
+        <module>event-service</module>
+        <module>venue-service</module>
         <!-- Phase 3: registration-service -->
         <!-- Phase 4: ticket-service, notification-service -->
         <!-- Phase 5: attendance-service, certificate-service -->
