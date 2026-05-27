@@ -2,6 +2,7 @@ package com.campuseventhub.registration;
 
 import com.campuseventhub.registration.client.EventClient;
 import com.campuseventhub.registration.client.EventDto;
+import com.campuseventhub.registration.messaging.RegistrationEventPublisher;
 import com.campuseventhub.registration.dto.RegistrationRequest;
 import com.campuseventhub.registration.dto.RegistrationResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,6 +36,7 @@ class RegistrationServiceApplicationTests {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
     @MockBean EventClient eventClient;
+    @MockBean RegistrationEventPublisher eventPublisher;
 
     static Long createdRegistrationId;
 

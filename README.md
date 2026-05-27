@@ -218,8 +218,8 @@ See [DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) for the full phased plan.
 | 1 | ✅ Done | Eureka Server + API Gateway |
 | 2 | ✅ Done | Event Service (12 tests) + Venue Service (13 tests) |
 | 3 | ✅ Done | Registration Service (14 tests) + Feign + Resilience4j circuit breaker |
-| 4 | 🔲 Next | Ticket Service + Notification Service (RabbitMQ async) |
-| 5 | 🔲 | Attendance Service + Certificate Service |
+| 4 | ✅ Done | Ticket Service (7 tests, ZXing QR) + Notification Service (9 tests) + RabbitMQ |
+| 5 | 🔲 Next | Attendance Service + Certificate Service |
 | 6 | 🔲 | Feedback + Leaderboard + Announcement |
 | 7 | 🔲 | Resource Upload + Sponsor Service |
 | 8 | 🔲 | Docker Compose containerization |

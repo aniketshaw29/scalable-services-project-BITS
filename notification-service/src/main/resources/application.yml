@@ -1,11 +1,11 @@
 server:
-  port: 4072
+  port: 4076
 
 spring:
   application:
-    name: registration-service
+    name: notification-service
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/registration_db}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/notification_db}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
@@ -29,27 +29,8 @@ eureka:
   instance:
     prefer-ip-address: true
 
-# Feign + Resilience4j circuit breaker
-feign:
-  circuitbreaker:
-    enabled: true
-
-resilience4j:
-  circuitbreaker:
-    instances:
-      event-service:
-        sliding-window-size: 10
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 10s
-        permitted-number-of-calls-in-half-open-state: 3
-  retry:
-    instances:
-      event-service:
-        max-attempts: 3
-        wait-duration: 500ms
-
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,circuitbreakers
+        include: health,info

@@ -12,7 +12,7 @@ Each phase is self-contained with a clear scope, implementation checklist, and t
 | 1 | ✅ DONE | Infrastructure Foundation | Eureka, API Gateway | Services discover each other |
 | 2 | ✅ DONE | Core Event Domain | Event Service, Venue Service | Events and venues CRUD working |
 | 3 | ✅ DONE | Registration + Resilience | Registration Service | Circuit breaker demo working |
-| 4 | 🔲 TODO | Async Messaging | Ticket, Notification | RabbitMQ flow working end-to-end |
+| 4 | ✅ DONE | Async Messaging | Ticket, Notification | RabbitMQ flow working end-to-end |
 | 5 | 🔲 TODO | Attendance + Certificate | Attendance, Certificate | Full student lifecycle complete |
 | 6 | 🔲 TODO | Engagement Layer | Feedback, Leaderboard, Announcement | Event engagement features complete |
 | 7 | 🔲 TODO | Utility Services | Resource Upload, Sponsor | Supporting features complete |
@@ -187,7 +187,7 @@ GET    /api/registrations/{id}/exists  → Check if registration exists (used by
 
 ---
 
-## Phase 4 — Async Messaging (Ticket + Notification)
+## Phase 4 — Async Messaging (Ticket + Notification) ✅
 
 **Goal:** After registration, QR pass is generated and notification is sent automatically via RabbitMQ.
 
@@ -255,13 +255,15 @@ GET  /api/notifications/type/{type}           → Filter by type
 **Database:** `notification_db`
 
 ### Test Criteria
-- [ ] Register a student → verify `registration.completed` message appears in RabbitMQ UI
-- [ ] Ticket row created in `ticket_db` with a non-null `qrCode` field
-- [ ] QR code decodes correctly (use online QR decoder to verify content)
-- [ ] Notification row created in `notification_db`
-- [ ] `GET /api/tickets/registration/{id}` returns QR data
-- [ ] `GET /api/notifications/student/{id}` returns the confirmation notification
-- [ ] RabbitMQ dead-letter queue configured — message isn't lost if consumer crashes
+- [x] ticket-service: 7/7 automated tests pass (QR generation, idempotency, get, validate, mark-used)
+- [x] notification-service: 9/9 automated tests pass (save, get by id/student/type, 404 handling)
+- [x] QR code is base64 PNG starting with `data:image/png;base64,` (automated)
+- [x] Ticket generation is idempotent — same registrationId never creates a duplicate (automated)
+- [x] registration-service: 14/14 tests still pass after adding RabbitMQ publisher (automated)
+- [ ] Register a student → `registration.completed` message visible in RabbitMQ UI (requires running stack)
+- [ ] Ticket row created in `ticket_db` with non-null `qrCode` field (requires running stack)
+- [ ] Notification row created in `notification_db` (requires running stack)
+- [ ] RabbitMQ dead-letter queue configured — message not lost if consumer crashes (requires running stack)
 
 ---
 

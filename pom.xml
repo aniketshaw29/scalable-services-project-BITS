@@ -28,7 +28,9 @@
         <module>venue-service</module>
         <!-- Phase 3: Registration -->
         <module>registration-service</module>
-        <!-- Phase 4: ticket-service, notification-service -->
+        <!-- Phase 4: Async messaging -->
+        <module>ticket-service</module>
+        <module>notification-service</module>
         <!-- Phase 5: attendance-service, certificate-service -->
         <!-- Phase 6: feedback-service, leaderboard-service, announcement-service -->
         <!-- Phase 7: resource-service, sponsor-service -->

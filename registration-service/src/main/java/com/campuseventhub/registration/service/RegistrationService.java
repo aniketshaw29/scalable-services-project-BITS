@@ -11,10 +11,13 @@ import com.campuseventhub.registration.exception.DuplicateRegistrationException;
 import com.campuseventhub.registration.exception.EventCapacityFullException;
 import com.campuseventhub.registration.exception.RegistrationNotFoundException;
 import com.campuseventhub.registration.repository.RegistrationRepository;
+import com.campuseventhub.registration.messaging.RegistrationCompletedEvent;
+import com.campuseventhub.registration.messaging.RegistrationEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +27,7 @@ public class RegistrationService {
 
     private final RegistrationRepository registrationRepository;
     private final EventClient eventClient;
+    private final RegistrationEventPublisher eventPublisher;
 
     @Transactional
     public RegistrationResponse register(RegistrationRequest request) {
@@ -49,6 +53,19 @@ public class RegistrationService {
 
         // Increment event capacity
         eventClient.updateCapacity(request.getEventId(), Map.of("delta", 1));
+
+        // Publish async event for Ticket + Notification services
+        eventPublisher.publishRegistrationCompleted(
+                RegistrationCompletedEvent.builder()
+                        .registrationId(saved.getId())
+                        .studentId(saved.getStudentId())
+                        .studentName(saved.getStudentName())
+                        .studentEmail(saved.getStudentEmail())
+                        .eventId(saved.getEventId())
+                        .eventTitle(event.getTitle())
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
 
         return toResponse(saved);
     }
