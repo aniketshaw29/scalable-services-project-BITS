@@ -15,7 +15,7 @@ Each phase is self-contained with a clear scope, implementation checklist, and t
 | 4 | ✅ DONE | Async Messaging | Ticket, Notification | RabbitMQ flow working end-to-end |
 | 5 | ✅ DONE | Attendance + Certificate | Attendance, Certificate | Full student lifecycle complete |
 | 6 | ✅ DONE | Engagement Layer | Feedback, Leaderboard, Announcement | Event engagement features complete |
-| 7 | 🔲 TODO | Utility Services | Resource Upload, Sponsor | Supporting features complete |
+| 7 | ✅ DONE | Utility Services | Resource Upload, Sponsor | Supporting features complete |
 | 8 | 🔲 TODO | Containerization | All services | docker-compose up brings everything up |
 | 9 | 🔲 TODO | Kubernetes | All services | kubectl apply deploys full system |
 | 10 | 🔲 TODO | Frontend Dashboard | React/Thymeleaf | End-to-end demo via UI |
@@ -423,33 +423,34 @@ GET   /api/announcements/type/{type}   → Filter by type
 
 ---
 
-## Phase 7 — Utility Services
+## Phase 7 — Utility Services ✅
 
 **Goal:** File uploads and sponsor management round out the platform.
 
 ### What to Build
 
-#### 7.1 Resource Upload Service (`resource-service/`)
+#### 7.1 Resource Upload Service (`resource-service/`, port 4081)
 
 **Entity: `Resource`**
 ```
 id, eventId, uploadedBy, fileName, fileType, fileSize,
-storageKey, uploadedAt, description
+storageKey (UUID-prefixed, unique), description, uploadedAt
 ```
 
-**Storage:** Local filesystem in `/uploads/` (Docker volume mounted). Swap for S3 in production.
+**Storage:** Local filesystem under configurable `resource.upload-dir` (default `uploads/`). Swappable for S3 in production via `StorageService` abstraction.
 
 **Endpoints:**
 ```
-POST  /api/resources/upload         → Upload file (multipart/form-data)
-GET   /api/resources/event/{id}     → List resources for event
-GET   /api/resources/{id}/download  → Download file
-DELETE /api/resources/{id}          → Delete resource
+POST   /api/resources/upload           → Upload file (multipart/form-data, max 10MB)
+GET    /api/resources/{id}             → Get resource metadata
+GET    /api/resources/event/{eventId}  → List resources for event
+GET    /api/resources/{id}/download    → Download file (Content-Disposition attachment)
+DELETE /api/resources/{id}             → Delete resource (removes file + DB row)
 ```
 
 **Database:** `resource_db`
 
-#### 7.2 Sponsor Service (`sponsor-service/`)
+#### 7.2 Sponsor Service (`sponsor-service/`, port 4082)
 
 **Entity: `Sponsor`**
 ```
@@ -459,26 +460,30 @@ contactPerson, contactEmail, description
 
 **Entity: `EventSponsor`**
 ```
-id, eventId, sponsorId, contribution, notes
+id, eventId, sponsorId (FK), contribution (BigDecimal), notes, linkedAt
+unique constraint: (event_id, sponsor_id)
 ```
 
 **Endpoints:**
 ```
-POST  /api/sponsors                        → Add sponsor
+POST  /api/sponsors                        → Create sponsor
 GET   /api/sponsors                        → List all sponsors
 GET   /api/sponsors/{id}                   → Get sponsor detail
 PUT   /api/sponsors/{id}                   → Update sponsor
 POST  /api/sponsors/{id}/events/{eventId}  → Link sponsor to event
-GET   /api/sponsors/event/{eventId}        → Sponsors for an event
+GET   /api/sponsors/event/{eventId}        → Sponsors for an event (with contribution details)
 ```
 
 **Database:** `sponsor_db`
 
 ### Test Criteria
-- [ ] Upload a file → stored on disk, row in `resource_db`
-- [ ] Download file by ID returns correct file
-- [ ] Create sponsor, link to event, retrieve sponsors for event
-- [ ] File size limit enforced (reject > 10MB)
+- [x] resource-service: 11/11 automated tests pass (upload, get by id/event, download, delete, size limit 413, 404 after delete)
+- [x] sponsor-service: 12/12 automated tests pass (create, default tier, validation 400, get/update/list, link, duplicate link 409, get by event, 404)
+- [x] File size limit enforced — files > 10MB return 413 (automated)
+- [x] Duplicate sponsor-event link returns 409 (automated)
+- [x] Download returns correct `Content-Disposition` and `Content-Type` headers (automated)
+- [ ] Upload a file → stored on disk, row in `resource_db` (requires running stack)
+- [ ] Download file by ID returns correct bytes (requires running stack)
 
 ---
 

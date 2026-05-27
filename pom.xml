@@ -38,7 +38,9 @@
         <module>feedback-service</module>
         <module>leaderboard-service</module>
         <module>announcement-service</module>
-        <!-- Phase 7: resource-service, sponsor-service -->
+        <!-- Phase 7: Utility Services -->
+        <module>resource-service</module>
+        <module>sponsor-service</module>
     </modules>
 
     <properties>

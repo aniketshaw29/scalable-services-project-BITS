@@ -1,0 +1,33 @@
+server:
+  port: 4081
+
+spring:
+  application:
+    name: resource-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/resource_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+resource:
+  upload-dir: uploads
+  max-file-size-mb: 10
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:4070/eureka/
+  instance:
+    prefer-ip-address: true
