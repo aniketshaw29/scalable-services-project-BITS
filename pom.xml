@@ -26,7 +26,8 @@
         <!-- Phase 2: Core domain services -->
         <module>event-service</module>
         <module>venue-service</module>
-        <!-- Phase 3: registration-service -->
+        <!-- Phase 3: Registration -->
+        <module>registration-service</module>
         <!-- Phase 4: ticket-service, notification-service -->
         <!-- Phase 5: attendance-service, certificate-service -->
         <!-- Phase 6: feedback-service, leaderboard-service, announcement-service -->
