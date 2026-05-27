@@ -2,6 +2,14 @@
 
 A production-grade microservices application built with Java + Spring Boot for managing college events end-to-end: from creation and venue assignment through registration, attendance, certificates, and feedback.
 
+**[Full Documentation →](docs/INDEX.md)**
+
+| | |
+|-|-|
+| [Running Locally](docs/RUNNING_LOCALLY.md) | [Docker Compose](docs/DOCKER.md) |
+| [Architecture](docs/ARCHITECTURE.md) | [API Contracts](docs/API_CONTRACTS.md) |
+| [Message Contracts](docs/MESSAGE_CONTRACTS.md) | [Development Plan](docs/DEVELOPMENT_PLAN.md) |
+
 ---
 
 ## Architecture Overview
@@ -210,6 +218,8 @@ kubectl port-forward svc/api-gateway 4069:4069 -n campus-eventhub
 ---
 
 ## Development Phases
+
+See [docs/INDEX.md](docs/INDEX.md) for the full documentation hub, including per-service deep-dives.
 
 See [DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) for the full phased plan.
 
