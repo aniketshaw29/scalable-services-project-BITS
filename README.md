@@ -220,8 +220,8 @@ See [DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) for the full phased plan.
 | 3 | ✅ Done | Registration Service (14 tests) + Feign + Resilience4j circuit breaker |
 | 4 | ✅ Done | Ticket Service (7 tests, ZXing QR) + Notification Service (9 tests) + RabbitMQ |
 | 5 | ✅ Done | Attendance Service (12 tests) + Certificate Service (10 tests, PDFBox PDF) |
-| 6 | 🔲 Next | Feedback + Leaderboard + Announcement |
-| 7 | 🔲 | Resource Upload + Sponsor Service |
+| 6 | ✅ Done | Feedback Service (12 tests) + Leaderboard Service (11 tests) + Announcement Service (10 tests) |
+| 7 | 🔲 Next | Resource Upload + Sponsor Service |
 | 8 | 🔲 | Docker Compose containerization |
 | 9 | 🔲 | Kubernetes deployment |
 | 10 | 🔲 | Frontend Dashboard |

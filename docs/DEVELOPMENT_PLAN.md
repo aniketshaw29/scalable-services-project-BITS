@@ -14,7 +14,7 @@ Each phase is self-contained with a clear scope, implementation checklist, and t
 | 3 | ✅ DONE | Registration + Resilience | Registration Service | Circuit breaker demo working |
 | 4 | ✅ DONE | Async Messaging | Ticket, Notification | RabbitMQ flow working end-to-end |
 | 5 | ✅ DONE | Attendance + Certificate | Attendance, Certificate | Full student lifecycle complete |
-| 6 | 🔲 TODO | Engagement Layer | Feedback, Leaderboard, Announcement | Event engagement features complete |
+| 6 | ✅ DONE | Engagement Layer | Feedback, Leaderboard, Announcement | Event engagement features complete |
 | 7 | 🔲 TODO | Utility Services | Resource Upload, Sponsor | Supporting features complete |
 | 8 | 🔲 TODO | Containerization | All services | docker-compose up brings everything up |
 | 9 | 🔲 TODO | Kubernetes | All services | kubectl apply deploys full system |
@@ -339,86 +339,87 @@ GET  /api/certificates/{id}/pdf                   → Download PDF as attachment
 
 ---
 
-## Phase 6 — Engagement Layer
+## Phase 6 — Engagement Layer ✅
 
 **Goal:** Feedback, Leaderboard, and Announcements complete the event engagement features.
 
 ### What to Build
 
-#### 6.1 Feedback Service (`feedback-service/`)
+#### 6.1 Feedback Service (`feedback-service/`, port 4078)
 
 **Entity: `Feedback`**
 ```
-id, studentId, eventId, rating (1-5), comment, submittedAt
-```
-
-**Entity: `FeedbackSummary` (computed view)**
-```
-eventId, averageRating, totalResponses, ratingDistribution
+id, studentId, studentName, eventId, rating (1-5), comment, submittedAt
+unique constraint: (student_id, event_id)
 ```
 
 **Endpoints:**
 ```
-POST  /api/feedback              → Submit feedback
-GET   /api/feedback/event/{id}   → All feedback for event
-GET   /api/feedback/event/{id}/summary → Aggregated summary
-GET   /api/feedback/student/{id} → Student's feedback history
+POST  /api/feedback                    → Submit feedback (one per student per event)
+GET   /api/feedback/{id}               → Get feedback by ID
+GET   /api/feedback/event/{id}         → All feedback for event
+GET   /api/feedback/event/{id}/summary → Aggregated summary (avg rating, distribution)
+GET   /api/feedback/student/{id}       → Student's feedback history
 ```
 
 **Database:** `feedback_db`
 
-#### 6.2 Leaderboard Service (`leaderboard-service/`)
+#### 6.2 Leaderboard Service (`leaderboard-service/`, port 4079)
 
 **Entity: `Result`**
 ```
 id, eventId, eventTitle, studentId, studentName,
-position (1st/2nd/3rd), category, points, publishedAt
+position (FIRST/SECOND/THIRD/PARTICIPANT), category, points, publishedAt
 ```
 
+**Auto-points:** FIRST=100, SECOND=75, THIRD=50, PARTICIPANT=10 (overridable)
+
 **RabbitMQ Publisher:**
-- Routing key: `results.published`
-- Payload: `{ eventId, eventTitle, results: [...] }`
+- Exchange: `campus.events`, Routing key: `results.published`
 
 **Endpoints:**
 ```
-POST  /api/leaderboard/results         → Publish results for event
-GET   /api/leaderboard/event/{eventId} → Rankings for event
+POST  /api/leaderboard/results         → Publish result for student (triggers notification)
+GET   /api/leaderboard/results/{id}    → Get result by ID
+GET   /api/leaderboard/event/{eventId} → Rankings for event (sorted by points)
 GET   /api/leaderboard/student/{studentId} → Student's achievements
-GET   /api/leaderboard/top             → Overall top performers
+GET   /api/leaderboard/top?limit=10    → Overall top performers
 ```
 
 **Database:** `leaderboard_db`
 
-#### 6.3 Announcement Service (`announcement-service/`)
+#### 6.3 Announcement Service (`announcement-service/`, port 4080)
 
 **Entity: `Announcement`**
 ```
 id, title, content, eventId (nullable), type (GENERAL/EVENT_UPDATE/VENUE_CHANGE/EMERGENCY),
-publishedAt, publishedBy
+publishedBy, publishedAt
 ```
 
 **RabbitMQ Publisher:**
-- Routing key: `announcement.created`
-- Payload: `{ announcementId, title, content, eventId, type }`
+- Exchange: `campus.events`, Routing key: `announcement.created`
 
 **Endpoints:**
 ```
-POST  /api/announcements               → Create announcement (triggers notification)
-GET   /api/announcements               → List all active announcements
+POST  /api/announcements               → Create announcement (triggers notification broadcast)
+GET   /api/announcements/{id}          → Get announcement by ID
+GET   /api/announcements               → List all (newest first)
 GET   /api/announcements/event/{id}    → Announcements for specific event
-GET   /api/announcements/{id}          → Get announcement detail
+GET   /api/announcements/type/{type}   → Filter by type
 ```
 
 **Database:** `announcement_db`
 
 ### Test Criteria
-- [ ] Submit feedback → rating stored, summary recalculated
-- [ ] `GET /api/feedback/event/{id}/summary` returns correct average rating
-- [ ] Publish leaderboard results → `results.published` message in RabbitMQ
-- [ ] Notification Service receives and logs results notification
-- [ ] Create announcement → `announcement.created` in RabbitMQ
-- [ ] Notification row created for announcement broadcast
-- [ ] All 12 business services + gateway + eureka visible in Eureka UI
+- [x] feedback-service: 12/12 automated tests pass (submit, duplicate 409, validation 400, get by id/event/student, summary avg/distribution)
+- [x] leaderboard-service: 11/11 automated tests pass (publish, auto-points, get by id/event/student, top performers, 404, 400)
+- [x] announcement-service: 10/10 automated tests pass (create, validation, get by id/all/event/type, 404, default type)
+- [x] Feedback prevents duplicate submissions per student per event (automated)
+- [x] Leaderboard auto-assigns points based on position (automated)
+- [x] Summary endpoint returns correct average and distribution across multiple responses (automated)
+- [ ] Publish leaderboard results → `results.published` message visible in RabbitMQ UI (requires running stack)
+- [ ] Notification Service receives and logs results notification (requires running stack)
+- [ ] Create announcement → `announcement.created` in RabbitMQ → notification created (requires running stack)
 
 ---
 

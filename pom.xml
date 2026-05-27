@@ -34,7 +34,10 @@
         <!-- Phase 5: Attendance & Certificates -->
         <module>attendance-service</module>
         <module>certificate-service</module>
-        <!-- Phase 6: feedback-service, leaderboard-service, announcement-service -->
+        <!-- Phase 6: Engagement Layer -->
+        <module>feedback-service</module>
+        <module>leaderboard-service</module>
+        <module>announcement-service</module>
         <!-- Phase 7: resource-service, sponsor-service -->
     </modules>
 

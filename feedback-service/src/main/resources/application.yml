@@ -1,0 +1,25 @@
+server:
+  port: 4078
+
+spring:
+  application:
+    name: feedback-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/feedback_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:4070/eureka/
+  instance:
+    prefer-ip-address: true
