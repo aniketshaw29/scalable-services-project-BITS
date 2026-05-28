@@ -7,8 +7,9 @@ A production-grade microservices application built with Java + Spring Boot for m
 | | |
 |-|-|
 | [Running Locally](docs/RUNNING_LOCALLY.md) | [Docker Compose](docs/DOCKER.md) |
-| [Architecture](docs/ARCHITECTURE.md) | [API Contracts](docs/API_CONTRACTS.md) |
-| [Message Contracts](docs/MESSAGE_CONTRACTS.md) | [Development Plan](docs/DEVELOPMENT_PLAN.md) |
+| [Kubernetes Deployment](docs/KUBERNETES.md) | [Architecture](docs/ARCHITECTURE.md) |
+| [API Contracts](docs/API_CONTRACTS.md) | [Message Contracts](docs/MESSAGE_CONTRACTS.md) |
+| [Development Plan](docs/DEVELOPMENT_PLAN.md) | [Install Guide](docs/INSTALL.md) |
 
 ---
 
@@ -173,15 +174,21 @@ docker-compose up --build
 ## Quick Start (Kubernetes)
 
 ```bash
-# Apply all manifests
-kubectl apply -f k8s/
+# Start minikube (or enable Docker Desktop Kubernetes)
+minikube start --memory=8192 --cpus=4
 
-# Check pods
-kubectl get pods -n campus-eventhub
+# Build images + apply all manifests
+./deploy.sh
 
-# Port-forward gateway
-kubectl port-forward svc/api-gateway 4069:4069 -n campus-eventhub
+# Watch pods come up
+kubectl get pods -n campus-eventhub --watch
+
+# API Gateway: http://localhost:30069
+# Eureka (port-forward): kubectl port-forward -n campus-eventhub svc/eureka-server 4070:4070
+# RabbitMQ UI (port-forward): kubectl port-forward -n campus-eventhub svc/rabbitmq 15672:15672
 ```
+
+See [docs/KUBERNETES.md](docs/KUBERNETES.md) for the full deployment guide.
 
 ---
 
@@ -233,5 +240,5 @@ See [DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) for the full phased plan.
 | 6 | ✅ Done | Feedback Service (12 tests) + Leaderboard Service (11 tests) + Announcement Service (10 tests) |
 | 7 | ✅ Done | Resource Service (11 tests, file upload/download) + Sponsor Service (12 tests, event linking) |
 | 8 | ✅ Done | Docker Compose — 14 Dockerfiles, docker-compose.yml with 12 PostgreSQL DBs, RabbitMQ, all services, healthchecks, named volumes |
-| 9 | 🔲 | Kubernetes deployment |
+| 9 | ✅ Done | Kubernetes — 17 manifests (namespace, configmap, RabbitMQ, Eureka, Gateway, 12 services each with own PostgreSQL PVC); `deploy.sh` + `teardown.sh` helper scripts |
 | 10 | 🔲 | Frontend Dashboard |

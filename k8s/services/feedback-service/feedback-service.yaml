@@ -1,0 +1,138 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feedback-db
+  namespace: campus-eventhub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: feedback-db
+  template:
+    metadata:
+      labels:
+        app: feedback-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: "feedback_db"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres", "-d", "feedback_db"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          volumeMounts:
+            - name: feedback-db-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: feedback-db-data
+          persistentVolumeClaim:
+            claimName: feedback-db-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: feedback-db-pvc
+  namespace: campus-eventhub
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: feedback-db
+  namespace: campus-eventhub
+spec:
+  selector:
+    app: feedback-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feedback-service
+  namespace: campus-eventhub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: feedback-service
+  template:
+    metadata:
+      labels:
+        app: feedback-service
+    spec:
+      containers:
+        - name: feedback-service
+          image: campus-eventhub/feedback-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4078
+          env:
+            - name: DB_URL
+              value: "jdbc:postgresql://feedback-db:5432/feedback_db"
+            - name: DB_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: DB_PASSWORD
+            - name: EUREKA_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: EUREKA_URL
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 4078
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 4078
+            initialDelaySeconds: 80
+            periodSeconds: 15
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: feedback-service
+  namespace: campus-eventhub
+spec:
+  selector:
+    app: feedback-service
+  ports:
+    - port: 4078
+      targetPort: 4078
+  type: ClusterIP

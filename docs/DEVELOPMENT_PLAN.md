@@ -17,7 +17,7 @@ Each phase is self-contained with a clear scope, implementation checklist, and t
 | 6 | ✅ DONE | Engagement Layer | Feedback, Leaderboard, Announcement | Event engagement features complete |
 | 7 | ✅ DONE | Utility Services | Resource Upload, Sponsor | Supporting features complete |
 | 8 | ✅ DONE | Containerization | All services | docker-compose up brings everything up |
-| 9 | 🔲 TODO | Kubernetes | All services | kubectl apply deploys full system |
+| 9 | ✅ DONE | Kubernetes | All services | kubectl apply / deploy.sh deploys full system |
 | 10 | 🔲 TODO | Frontend Dashboard | React/Thymeleaf | End-to-end demo via UI |
 
 ---
@@ -547,53 +547,67 @@ Eureka server additionally uses `${SERVER_PORT:4070}` and `${EUREKA_HOSTNAME:loc
 
 ---
 
-## Phase 9 — Kubernetes Deployment
+## Phase 9 — Kubernetes Deployment ✅
 
-**Goal:** Full system deployable to Kubernetes cluster.
+**Goal:** Full system deployable to a local Kubernetes cluster.
 
-### What to Build
+### What Was Built
 
-#### 9.1 Namespace + ConfigMap
+#### 9.1 Manifest structure
 ```
 k8s/
-├── namespace.yaml
-├── configmap.yaml          ← shared env vars (RabbitMQ host, Eureka URL)
+├── namespace.yaml              ← campus-eventhub namespace
+├── configmap.yaml              ← shared config (DB creds, RabbitMQ, Eureka URL)
+├── rabbitmq/
+│   └── rabbitmq.yaml           ← Deployment + PVC (1Gi) + ClusterIP Service
 ├── eureka/
-│   ├── deployment.yaml
-│   └── service.yaml
+│   └── eureka.yaml             ← Deployment + ClusterIP Service (4070)
 ├── gateway/
-│   ├── deployment.yaml
-│   └── service.yaml (LoadBalancer)
+│   └── gateway.yaml            ← Deployment + NodePort Service (30069)
 └── services/
-    ├── event-service/
-    │   ├── deployment.yaml
-    │   ├── service.yaml
-    │   └── postgres-deployment.yaml
-    └── ... (same pattern for each service)
+    ├── event-service/event-service.yaml
+    ├── registration-service/registration-service.yaml
+    ├── venue-service/venue-service.yaml
+    ├── attendance-service/attendance-service.yaml
+    ├── ticket-service/ticket-service.yaml
+    ├── notification-service/notification-service.yaml
+    ├── certificate-service/certificate-service.yaml
+    ├── feedback-service/feedback-service.yaml
+    ├── leaderboard-service/leaderboard-service.yaml
+    ├── announcement-service/announcement-service.yaml
+    ├── resource-service/resource-service.yaml   ← includes uploads PVC (5Gi)
+    └── sponsor-service/sponsor-service.yaml
 ```
 
-#### 9.2 Per-service Kubernetes resources
-Each service:
-- `Deployment` with 1 replica, liveness/readiness probes
-- `Service` (ClusterIP)
-- `Deployment` + `Service` for its PostgreSQL pod
+#### 9.2 Per-service manifest contents (each `.yaml` file contains)
+- PostgreSQL `Deployment` (image: `postgres:15-alpine`) + `PVC` (1Gi) + ClusterIP `Service` (5432)
+- App `Deployment` (image: `campus-eventhub/<service>:latest`, `imagePullPolicy: IfNotPresent`)
+  - Env vars from `campus-config` ConfigMap
+  - `readinessProbe` / `livenessProbe` via `httpGet /actuator/health`
+  - Resource requests: 256Mi / 100m; limits: 512Mi / 500m (certificate-service: 384Mi/768Mi)
+- App ClusterIP `Service`
 
-#### 9.3 Gateway exposed via LoadBalancer / NodePort
+#### 9.3 Helper scripts
+- `deploy.sh` — builds all 14 Docker images then applies manifests in correct order (namespace → configmap → rabbitmq → eureka → gateway → services); auto-detects minikube
+- `teardown.sh` — removes deployments/services while preserving PVCs by default; `--delete-namespace` flag removes everything
+
+#### 9.4 Documentation
+- `docs/KUBERNETES.md` — full deploy guide: prerequisites, minikube vs Docker Desktop setup, step-by-step instructions, complete demo flow, troubleshooting, port reference
 
 ### Failure Demo
 ```bash
 # Kill a pod — Kubernetes restarts it
-kubectl delete pod <event-service-pod> -n campus-eventhub
+kubectl delete pod -n campus-eventhub <event-service-pod>
 
 # Watch it come back
-kubectl get pods -n campus-eventhub -w
+kubectl get pods -n campus-eventhub --watch
 ```
 
 ### Test Criteria
-- [ ] `kubectl apply -f k8s/` deploys all resources
-- [ ] All pods reach `Running` state
-- [ ] `kubectl get svc api-gateway` shows external IP / NodePort
-- [ ] Demo flow works through Kubernetes gateway
+- [x] `deploy.sh` applies all manifests in correct startup order
+- [ ] All pods reach `Running` state (requires running cluster)
+- [ ] API Gateway accessible at `http://localhost:30069` (NodePort)
+- [ ] Demo flow works through Kubernetes gateway (requires running cluster)
 - [ ] Kill a pod → pod restarts automatically (verify with `kubectl get pods -w`)
 - [ ] HPA demo (optional): scale registration-service under load
 

@@ -1,0 +1,138 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sponsor-db
+  namespace: campus-eventhub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sponsor-db
+  template:
+    metadata:
+      labels:
+        app: sponsor-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: "sponsor_db"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres", "-d", "sponsor_db"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          volumeMounts:
+            - name: sponsor-db-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: sponsor-db-data
+          persistentVolumeClaim:
+            claimName: sponsor-db-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sponsor-db-pvc
+  namespace: campus-eventhub
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sponsor-db
+  namespace: campus-eventhub
+spec:
+  selector:
+    app: sponsor-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sponsor-service
+  namespace: campus-eventhub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sponsor-service
+  template:
+    metadata:
+      labels:
+        app: sponsor-service
+    spec:
+      containers:
+        - name: sponsor-service
+          image: campus-eventhub/sponsor-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4082
+          env:
+            - name: DB_URL
+              value: "jdbc:postgresql://sponsor-db:5432/sponsor_db"
+            - name: DB_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: DB_PASSWORD
+            - name: EUREKA_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: EUREKA_URL
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 4082
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 4082
+            initialDelaySeconds: 80
+            periodSeconds: 15
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sponsor-service
+  namespace: campus-eventhub
+spec:
+  selector:
+    app: sponsor-service
+  ports:
+    - port: 4082
+      targetPort: 4082
+  type: ClusterIP

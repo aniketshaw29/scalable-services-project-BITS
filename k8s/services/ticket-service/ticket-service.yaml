@@ -1,0 +1,158 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ticket-db
+  namespace: campus-eventhub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ticket-db
+  template:
+    metadata:
+      labels:
+        app: ticket-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: "ticket_db"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres", "-d", "ticket_db"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          volumeMounts:
+            - name: ticket-db-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: ticket-db-data
+          persistentVolumeClaim:
+            claimName: ticket-db-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ticket-db-pvc
+  namespace: campus-eventhub
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ticket-db
+  namespace: campus-eventhub
+spec:
+  selector:
+    app: ticket-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ticket-service
+  namespace: campus-eventhub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ticket-service
+  template:
+    metadata:
+      labels:
+        app: ticket-service
+    spec:
+      containers:
+        - name: ticket-service
+          image: campus-eventhub/ticket-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4075
+          env:
+            - name: DB_URL
+              value: "jdbc:postgresql://ticket-db:5432/ticket_db"
+            - name: DB_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: DB_PASSWORD
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: RABBITMQ_HOST
+            - name: RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: RABBITMQ_PORT
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: RABBITMQ_USERNAME
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: RABBITMQ_PASSWORD
+            - name: EUREKA_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: EUREKA_URL
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 4075
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 4075
+            initialDelaySeconds: 80
+            periodSeconds: 15
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ticket-service
+  namespace: campus-eventhub
+spec:
+  selector:
+    app: ticket-service
+  ports:
+    - port: 4075
+      targetPort: 4075
+  type: ClusterIP

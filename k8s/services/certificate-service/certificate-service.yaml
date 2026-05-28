@@ -1,0 +1,158 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: certificate-db
+  namespace: campus-eventhub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: certificate-db
+  template:
+    metadata:
+      labels:
+        app: certificate-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: "certificate_db"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres", "-d", "certificate_db"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          volumeMounts:
+            - name: certificate-db-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: certificate-db-data
+          persistentVolumeClaim:
+            claimName: certificate-db-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: certificate-db-pvc
+  namespace: campus-eventhub
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: certificate-db
+  namespace: campus-eventhub
+spec:
+  selector:
+    app: certificate-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: certificate-service
+  namespace: campus-eventhub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: certificate-service
+  template:
+    metadata:
+      labels:
+        app: certificate-service
+    spec:
+      containers:
+        - name: certificate-service
+          image: campus-eventhub/certificate-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4077
+          env:
+            - name: DB_URL
+              value: "jdbc:postgresql://certificate-db:5432/certificate_db"
+            - name: DB_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: DB_PASSWORD
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: RABBITMQ_HOST
+            - name: RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: RABBITMQ_PORT
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: RABBITMQ_USERNAME
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: RABBITMQ_PASSWORD
+            - name: EUREKA_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: campus-config
+                  key: EUREKA_URL
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 4077
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 4077
+            initialDelaySeconds: 80
+            periodSeconds: 15
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "100m"
+            limits:
+              memory: "768Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: certificate-service
+  namespace: campus-eventhub
+spec:
+  selector:
+    app: certificate-service
+  ports:
+    - port: 4077
+      targetPort: 4077
+  type: ClusterIP

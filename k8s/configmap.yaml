@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: campus-config
+  namespace: campus-eventhub
+data:
+  EUREKA_URL: "http://eureka-server:4070/eureka/"
+  EUREKA_HOSTNAME: "eureka-server"
+  RABBITMQ_HOST: "rabbitmq"
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_USERNAME: "guest"
+  RABBITMQ_PASSWORD: "guest"
+  DB_USERNAME: "postgres"
+  DB_PASSWORD: "postgres"
