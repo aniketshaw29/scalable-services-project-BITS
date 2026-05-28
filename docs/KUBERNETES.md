@@ -25,7 +25,7 @@ This guide covers deploying Campus EventHub to a local Kubernetes cluster using 
 | kubectl | 1.27+ | [kubernetes.io/docs](https://kubernetes.io/docs/tasks/tools/) |
 | minikube (option A) | 1.30+ | `brew install minikube` |
 | Docker Desktop k8s (option B) | 4.20+ | Enable in Docker Desktop → Settings → Kubernetes |
-| Java 17 | 17+ | See [INSTALL.md](INSTALL.md) |
+| Java 21 | 21+ | See [INSTALL.md](INSTALL.md) |
 | Maven | 3.8+ | See [INSTALL.md](INSTALL.md) |
 | Node.js | 18+ | See [INSTALL.md](INSTALL.md) — needed to build the frontend image |
 

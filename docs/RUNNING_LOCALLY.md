@@ -10,7 +10,7 @@ The React frontend dev server proxies `/api` calls to the gateway via Vite's bui
 
 | Tool | Version | Notes |
 |------|---------|-------|
-| Java | 17+ | `java -version` to check |
+| Java | **21+** | `java -version` to check |
 | Maven | 3.8+ | `mvn -version` to check |
 | Node.js | 18+ | `node -v` to check — required for the frontend |
 | npm | 9+ | Bundled with Node.js |

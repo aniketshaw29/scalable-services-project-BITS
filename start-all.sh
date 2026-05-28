@@ -76,12 +76,12 @@ for arg in "$@"; do
 done
 
 # ── pre-flight checks ────────────────────────────────────────────────────────
-command -v java >/dev/null 2>&1 || { error "java not found. Install Java 17+."; exit 1; }
+command -v java >/dev/null 2>&1 || { error "java not found. Install Java 21+."; exit 1; }
 command -v mvn  >/dev/null 2>&1 || { error "mvn not found. Install Maven 3.8+."; exit 1; }
 
 JAVA_VER=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}' | cut -d. -f1)
-if [[ "$JAVA_VER" -lt 17 ]]; then
-  error "Java 17+ required. Found Java $JAVA_VER."
+if [[ "$JAVA_VER" -lt 21 ]]; then
+  error "Java 21+ required. Found Java $JAVA_VER."
   exit 1
 fi
 

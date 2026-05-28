@@ -3,7 +3,7 @@
 Install everything you need to run Campus EventHub locally on macOS, Linux, or Windows.
 
 **Required tools:**
-- Java 17+ and Maven 3.8+ — for the 14 Spring Boot services
+- Java **21+** and Maven 3.8+ — for the 14 Spring Boot services
 - Node.js 18+ and npm — for the React frontend
 - PostgreSQL 13+ — one shared instance, 12 databases
 - RabbitMQ 3.x — message broker
@@ -11,15 +11,15 @@ Install everything you need to run Campus EventHub locally on macOS, Linux, or W
 
 ---
 
-## Java 17
+## Java 21
 
 ### macOS
 
 **Option A — Homebrew (recommended)**
 ```bash
-brew install openjdk@17
+brew install openjdk@21
 # Add to shell profile (~/.zshrc or ~/.bash_profile)
-echo 'export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"' >> ~/.zshrc
+echo 'export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
@@ -27,29 +27,29 @@ source ~/.zshrc
 ```bash
 curl -s "https://get.sdkman.io" | bash
 source "$HOME/.sdkman/bin/sdkman-init.sh"
-sdk install java 17.0.11-tem
-sdk use java 17.0.11-tem
+sdk install java 21.0.3-tem
+sdk use java 21.0.3-tem
 ```
 
 ### Linux (Ubuntu/Debian)
 ```bash
 sudo apt update
-sudo apt install openjdk-17-jdk -y
+sudo apt install openjdk-21-jdk -y
 ```
 
 ### Linux (RHEL/Fedora)
 ```bash
-sudo dnf install java-17-openjdk-devel -y
+sudo dnf install java-21-openjdk-devel -y
 ```
 
 ### Windows
-Download and run the installer from [Adoptium](https://adoptium.net/temurin/releases/?version=17).
-Choose the `.msi` installer for `Windows x64 JDK 17`.
+Download and run the installer from [Adoptium](https://adoptium.net/temurin/releases/?version=21).
+Choose the `.msi` installer for `Windows x64 JDK 21`.
 
 ### Verify
 ```bash
 java -version
-# Expected: openjdk version "17.x.x" ...
+# Expected: openjdk version "21.x.x" ...
 ```
 
 ---
@@ -289,7 +289,7 @@ echo "=== RabbitMQ ===" && curl -s -o /dev/null -w "%{http_code}" http://localho
 Expected output:
 ```
 === Java ===
-openjdk version "17.x.x" ...
+openjdk version "21.x.x" ...
 === Maven ===
 Apache Maven 3.x.x ...
 === Node.js ===
