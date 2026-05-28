@@ -27,6 +27,7 @@ This guide covers deploying Campus EventHub to a local Kubernetes cluster using 
 | Docker Desktop k8s (option B) | 4.20+ | Enable in Docker Desktop → Settings → Kubernetes |
 | Java 17 | 17+ | See [INSTALL.md](INSTALL.md) |
 | Maven | 3.8+ | See [INSTALL.md](INSTALL.md) |
+| Node.js | 18+ | See [INSTALL.md](INSTALL.md) — needed to build the frontend image |
 
 Verify kubectl is connected to your cluster:
 
@@ -206,15 +207,23 @@ All 13 services (excluding Eureka itself) should appear as `UP`.
 
 ## Accessing Services
 
-### API Gateway (primary access point)
+### Frontend (primary access point)
+
+The frontend is exposed on NodePort `30080`:
+
+```
+http://localhost:30080
+```
+
+This is the recommended entry point for the full demo — it serves the React app and proxies all `/api` calls to the gateway internally.
+
+### API Gateway (direct API access)
 
 The API Gateway is exposed on NodePort `30069`:
 
 ```
 http://localhost:30069
 ```
-
-All API calls go through the gateway:
 
 ```bash
 # Example: list events
@@ -406,7 +415,8 @@ minikube delete
 | [k8s/configmap.yaml](../k8s/configmap.yaml) | Shared config (DB creds, RabbitMQ, Eureka URL) |
 | [k8s/rabbitmq/rabbitmq.yaml](../k8s/rabbitmq/rabbitmq.yaml) | RabbitMQ Deployment + PVC + Service |
 | [k8s/eureka/eureka.yaml](../k8s/eureka/eureka.yaml) | Eureka Server Deployment + Service |
-| [k8s/gateway/gateway.yaml](../k8s/gateway/gateway.yaml) | API Gateway Deployment + NodePort Service |
+| [k8s/gateway/gateway.yaml](../k8s/gateway/gateway.yaml) | API Gateway Deployment + NodePort Service (30069) |
+| [k8s/frontend/frontend.yaml](../k8s/frontend/frontend.yaml) | React Frontend Deployment + NodePort Service (30080) |
 | [k8s/services/event-service/](../k8s/services/event-service/) | Event Service + Postgres |
 | [k8s/services/registration-service/](../k8s/services/registration-service/) | Registration Service + Postgres |
 | [k8s/services/venue-service/](../k8s/services/venue-service/) | Venue Service + Postgres |
@@ -424,6 +434,7 @@ minikube delete
 
 | Service | Container Port | NodePort |
 |---------|---------------|----------|
+| **frontend** | 80 | **30080** |
 | api-gateway | 4069 | **30069** |
 | eureka-server | 4070 | — (ClusterIP) |
 | event-service | 4071 | — |

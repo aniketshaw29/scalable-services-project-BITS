@@ -2,6 +2,13 @@
 
 Install everything you need to run Campus EventHub locally on macOS, Linux, or Windows.
 
+**Required tools:**
+- Java 17+ and Maven 3.8+ — for the 14 Spring Boot services
+- Node.js 18+ and npm — for the React frontend
+- PostgreSQL 13+ — one shared instance, 12 databases
+- RabbitMQ 3.x — message broker
+- Docker (optional) — for running infra in containers, or the full stack via Docker Compose
+
 ---
 
 ## Java 17
@@ -274,6 +281,7 @@ Run this to confirm everything is ready:
 ```bash
 echo "=== Java ===" && java -version
 echo "=== Maven ===" && mvn -version
+echo "=== Node.js ===" && node -v && npm -v
 echo "=== PostgreSQL ===" && psql -U postgres -c 'SELECT version();'
 echo "=== RabbitMQ ===" && curl -s -o /dev/null -w "%{http_code}" http://localhost:15672/api/overview -u guest:guest
 ```
@@ -284,6 +292,9 @@ Expected output:
 openjdk version "17.x.x" ...
 === Maven ===
 Apache Maven 3.x.x ...
+=== Node.js ===
+v20.x.x
+9.x.x
 === PostgreSQL ===
 PostgreSQL 15.x ...
 === RabbitMQ ===
@@ -303,3 +314,45 @@ Once all prerequisites are installed and the 12 databases exist:
 
 See [RUNNING_LOCALLY.md](RUNNING_LOCALLY.md) for the full local run guide,
 or [DOCKER.md](DOCKER.md) if you prefer Docker Compose.
+
+---
+
+## Node.js (required for the React frontend)
+
+### macOS
+
+**Option A — Homebrew (recommended)**
+```bash
+brew install node@20
+```
+
+**Option B — nvm (manages multiple Node versions)**
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+source ~/.zshrc   # or ~/.bashrc
+nvm install 20
+nvm use 20
+```
+
+### Linux (Ubuntu/Debian)
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install nodejs -y
+```
+
+### Linux (RHEL/Fedora)
+```bash
+curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+sudo dnf install nodejs -y
+```
+
+### Windows
+Download and run the LTS installer from [nodejs.org](https://nodejs.org). npm is included.
+
+### Verify
+```bash
+node -v
+# Expected: v20.x.x
+npm -v
+# Expected: 9.x.x or 10.x.x
+```

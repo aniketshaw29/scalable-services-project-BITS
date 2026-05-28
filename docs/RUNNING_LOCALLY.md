@@ -1,7 +1,8 @@
 # Running Locally
 
 Run all Campus EventHub services on your machine without Docker.
-All services fall back to `localhost` defaults automatically — no environment variables required.
+All Java services fall back to `localhost` defaults automatically — no environment variables required.
+The React frontend dev server proxies `/api` calls to the gateway via Vite's built-in proxy.
 
 ---
 
@@ -11,6 +12,8 @@ All services fall back to `localhost` defaults automatically — no environment 
 |------|---------|-------|
 | Java | 17+ | `java -version` to check |
 | Maven | 3.8+ | `mvn -version` to check |
+| Node.js | 18+ | `node -v` to check — required for the frontend |
+| npm | 9+ | Bundled with Node.js |
 | PostgreSQL | 13+ | Running on `localhost:5432`, user `postgres`, password `postgres` |
 | RabbitMQ | 3.x | Running on `localhost:5672`, user `guest`, password `guest` |
 
@@ -62,7 +65,7 @@ done
 
 ---
 
-## Step 2 — Build All Services
+## Step 2 — Build All Java Services
 
 From the project root:
 
@@ -74,11 +77,41 @@ This builds all 14 services in one pass. JARs land in `<service>/target/*.jar`.
 
 ---
 
-## Step 3 — Start Services
+## Step 3 — Install Frontend Dependencies
 
-Services must start in dependency order. Open a terminal for each (or use a terminal multiplexer like `tmux`).
+```bash
+cd frontend
+npm install
+cd ..
+```
 
-### Required order
+Only needed once (or after `package.json` changes).
+
+---
+
+## Step 4 — Start Services
+
+Services must start in dependency order. Use the provided script or open a terminal per service.
+
+### Option A — use start-all.sh (recommended)
+
+```bash
+./start-all.sh
+```
+
+This builds all JARs, starts all 14 Java services in order with a 4-second gap, then starts the Vite dev server. Logs go to `logs/<service>.log`.
+
+```bash
+# Additional flags
+./start-all.sh --skip-build      # skip mvn package (use existing JARs)
+./start-all.sh --skip-frontend   # skip the React dev server
+./start-all.sh --logs            # tail all logs after starting
+./start-all.sh --stop            # stop all running services
+```
+
+### Option B — manual
+
+Java start order:
 
 ```
 1. eureka-server        (everything registers here)
@@ -97,78 +130,31 @@ Services must start in dependency order. Open a terminal for each (or use a term
 14. sponsor-service
 ```
 
-### Start each service
-
 ```bash
 java -jar eureka-server/target/*.jar
 java -jar api-gateway/target/*.jar
 java -jar event-service/target/*.jar
-java -jar venue-service/target/*.jar
-java -jar registration-service/target/*.jar
-java -jar attendance-service/target/*.jar
-java -jar ticket-service/target/*.jar
-java -jar notification-service/target/*.jar
-java -jar certificate-service/target/*.jar
-java -jar feedback-service/target/*.jar
-java -jar leaderboard-service/target/*.jar
-java -jar announcement-service/target/*.jar
-java -jar resource-service/target/*.jar
-java -jar sponsor-service/target/*.jar
+# ... etc
 ```
 
-Or use `mvn spring-boot:run` from inside each service directory during development:
+Then start the frontend dev server:
 
 ```bash
-cd event-service && mvn spring-boot:run
-```
-
-### Tip: run all with a script
-
-```bash
-#!/usr/bin/env bash
-# start-all.sh — run from project root
-# Adjust sleep times if services are slow to start on your machine
-
-services=(
-  "eureka-server"
-  "api-gateway"
-  "event-service"
-  "venue-service"
-  "registration-service"
-  "attendance-service"
-  "ticket-service"
-  "notification-service"
-  "certificate-service"
-  "feedback-service"
-  "leaderboard-service"
-  "announcement-service"
-  "resource-service"
-  "sponsor-service"
-)
-
-for svc in "${services[@]}"; do
-  echo "Starting $svc..."
-  java -jar "$svc/target/"*.jar > "logs/$svc.log" 2>&1 &
-  sleep 3
-done
-
-echo "All services started. Check logs/ for output."
-```
-
-```bash
-mkdir -p logs
-chmod +x start-all.sh
-./start-all.sh
+cd frontend
+npm run dev
+# Listening on http://localhost:3000
+# /api/* proxied to http://localhost:4069
 ```
 
 ---
 
-## Step 4 — Verify
+## Step 5 — Verify
 
 Once everything is running:
 
 | Check | URL |
 |-------|-----|
+| **Frontend** | http://localhost:3000 |
 | Eureka dashboard (all services registered) | http://localhost:4070 |
 | API Gateway health | http://localhost:4069/actuator/health |
 | RabbitMQ management UI | http://localhost:15672 (guest / guest) |
@@ -177,7 +163,7 @@ Once everything is running:
 
 ## Running Tests
 
-Run all tests across every service:
+Run all Java tests across every service:
 
 ```bash
 mvn test
@@ -187,6 +173,12 @@ Run tests for a single service:
 
 ```bash
 cd event-service && mvn test
+```
+
+Run frontend lint/type check (no test suite currently):
+
+```bash
+cd frontend && npm run build   # fails fast on JSX errors
 ```
 
 Tests use an H2 in-memory database and mock out Eureka, Feign clients, and RabbitMQ — no live infrastructure needed.
@@ -212,6 +204,9 @@ The minimum set depends on what you're working on:
 | announcement-service | eureka-server, rabbitmq |
 | resource-service | eureka-server |
 | sponsor-service | eureka-server |
+| **frontend** | api-gateway (and whatever services you're testing against) |
+
+For frontend-only work you can mock the backend by editing `src/api/` files to return static fixtures, or run only the services you need.
 
 ---
 
@@ -219,6 +214,7 @@ The minimum set depends on what you're working on:
 
 | Service | Port |
 |---------|------|
+| **Frontend (dev server)** | **3000** |
 | API Gateway | 4069 |
 | Eureka Server | 4070 |
 | Event Service | 4071 |
