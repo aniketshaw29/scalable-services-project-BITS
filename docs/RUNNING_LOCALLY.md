@@ -12,8 +12,8 @@ The React frontend dev server proxies `/api` calls to the gateway via Vite's bui
 |------|---------|-------|
 | Java | **21+** | `java -version` to check |
 | Maven | 3.8+ | `mvn -version` to check |
-| Node.js | 18+ | `node -v` to check — required for the frontend |
-| npm | 9+ | Bundled with Node.js |
+| Node.js | **22+** | `node -v` to check — required for the frontend |
+| npm | 10+ | Bundled with Node.js |
 | PostgreSQL | 13+ | Running on `localhost:5432`, user `postgres`, password `postgres` |
 | RabbitMQ | 3.x | Running on `localhost:5672`, user `guest`, password `guest` |
 
@@ -99,14 +99,54 @@ Services must start in dependency order. Use the provided script or open a termi
 ./start-all.sh
 ```
 
-This builds all JARs, starts all 14 Java services in order with a 4-second gap, then starts the Vite dev server. Logs go to `logs/<service>.log`.
+On startup the script:
+1. Verifies Java 21+ and Node.js 22+ are installed
+2. **Checks PostgreSQL** — connects as `postgres`, verifies version ≥ 13, and confirms all 12 databases exist. Prints the exact `CREATE DATABASE` commands for any that are missing and exits.
+3. **Checks RabbitMQ** — verifies port 5672 is reachable on `localhost`
+4. Builds all 14 JARs (`mvn clean package -DskipTests`)
+5. Starts all 14 Java services in dependency order (4-second gap each)
+6. Starts the Vite dev server for the frontend
+
+#### All flags
+
+| Flag | Effect |
+|------|--------|
+| `--stop` | Stop all running services |
+| `--stop <name>` | Stop one service by name (e.g. `--stop event-service`) |
+| `--restart <name>` | Stop and restart one service without a full rebuild |
+| `--status` | Show running/stopped status of every service with its PID |
+| `--logs` | Tail all service logs (Ctrl+C to stop tailing — services keep running) |
+| `--logs <name>` | Tail one service's log (e.g. `--logs registration-service`) |
+| `--skip-build` | Skip `mvn package` — use existing JARs |
+| `--skip-frontend` | Skip the React dev server |
+| `--skip-infra-check` | Skip PostgreSQL and RabbitMQ pre-flight checks (useful when using Docker for infra) |
+
+#### Examples
 
 ```bash
-# Additional flags
-./start-all.sh --skip-build      # skip mvn package (use existing JARs)
-./start-all.sh --skip-frontend   # skip the React dev server
-./start-all.sh --logs            # tail all logs after starting
-./start-all.sh --stop            # stop all running services
+# Start everything (full pre-flight + build)
+./start-all.sh
+
+# Start without rebuilding (code unchanged)
+./start-all.sh --skip-build
+
+# Check what's running right now
+./start-all.sh --status
+
+# Restart only one service after a code change
+./start-all.sh --restart event-service
+
+# Stop one service
+./start-all.sh --stop notification-service
+
+# Watch a single service log
+./start-all.sh --logs certificate-service
+
+# Stop everything
+./start-all.sh --stop
+
+# Using Docker for PostgreSQL/RabbitMQ instead of native
+./start-all.sh --skip-infra-check
 ```
 
 ### Option B — manual

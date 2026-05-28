@@ -1,0 +1,21 @@
+# Skip compiled output
+**/target/
+
+# Skip frontend (has its own separate build context)
+frontend/
+
+# Skip IDE, logs, and tooling noise
+.git/
+.gitignore
+.idea/
+**/*.iml
+.vscode/
+logs/
+.service-pids
+*.sh
+
+# Skip docs, k8s, postman
+docs/
+k8s/
+postman/
+*.md

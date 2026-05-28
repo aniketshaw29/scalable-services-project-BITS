@@ -1,6 +1,6 @@
 # Prerequisites — Installation Guide
 
-Install everything you need to run Campus EventHub locally on macOS, Linux, or Windows.
+Install everything you need to run Campus EventHub locally on macOS.
 
 **Required tools:**
 - Java **21+** and Maven 3.8+ — for the 14 Spring Boot services
@@ -9,42 +9,26 @@ Install everything you need to run Campus EventHub locally on macOS, Linux, or W
 - RabbitMQ 3.x — message broker
 - Docker (optional) — for running infra in containers, or the full stack via Docker Compose
 
+All tools below are installed via **Homebrew**. If you don't have Homebrew yet:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
 ---
 
 ## Java 21
 
-### macOS
-
-**Option A — Homebrew (recommended)**
 ```bash
 brew install openjdk@21
-# Add to shell profile (~/.zshrc or ~/.bash_profile)
+```
+
+Add to your shell profile (`~/.zshrc`):
+
+```bash
 echo 'export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 ```
-
-**Option B — SDKMAN (manages multiple Java versions)**
-```bash
-curl -s "https://get.sdkman.io" | bash
-source "$HOME/.sdkman/bin/sdkman-init.sh"
-sdk install java 21.0.3-tem
-sdk use java 21.0.3-tem
-```
-
-### Linux (Ubuntu/Debian)
-```bash
-sudo apt update
-sudo apt install openjdk-21-jdk -y
-```
-
-### Linux (RHEL/Fedora)
-```bash
-sudo dnf install java-21-openjdk-devel -y
-```
-
-### Windows
-Download and run the installer from [Adoptium](https://adoptium.net/temurin/releases/?version=21).
-Choose the `.msi` installer for `Windows x64 JDK 21`.
 
 ### Verify
 ```bash
@@ -56,24 +40,9 @@ java -version
 
 ## Maven
 
-### macOS
 ```bash
 brew install maven
 ```
-
-### Linux (Ubuntu/Debian)
-```bash
-sudo apt install maven -y
-```
-
-### Linux (RHEL/Fedora)
-```bash
-sudo dnf install maven -y
-```
-
-### Windows
-Download the binary zip from [maven.apache.org](https://maven.apache.org/download.cgi),
-extract to `C:\Program Files\Apache\maven`, and add `bin\` to your `PATH` environment variable.
 
 ### Verify
 ```bash
@@ -83,63 +52,48 @@ mvn -version
 
 ---
 
-## PostgreSQL
+## Node.js
 
-### macOS
-
-**Option A — Homebrew**
 ```bash
-brew install postgresql@15
-brew services start postgresql@15
-# Add to shell profile
-echo 'export PATH="/opt/homebrew/opt/postgresql@15/bin:$PATH"' >> ~/.zshrc
+brew install node@22
+```
+
+Add to your shell profile if brew instructs you to:
+
+```bash
+echo 'export PATH="/opt/homebrew/opt/node@22/bin:$PATH"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-**Option B — Postgres.app (GUI, easiest)**
-Download from [postgresapp.com](https://postgresapp.com), drag to Applications, click "Initialize".
-
-### Linux (Ubuntu/Debian)
+### Verify
 ```bash
-sudo apt install postgresql postgresql-contrib -y
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
+node -v   # Expected: v22.x.x
+npm -v    # Expected: 10.x.x
 ```
 
-### Linux (RHEL/Fedora)
+---
+
+## PostgreSQL
+
+Download and install **Postgres.app** — the easiest way to run PostgreSQL on macOS, no terminal setup needed.
+
+1. Go to [postgresapp.com](https://postgresapp.com)
+2. Download the latest release (PostgreSQL 16 or 17)
+3. Move `Postgres.app` to your `/Applications` folder
+4. Open the app and click **Initialize** to create your first server
+5. Click **Start** — the elephant icon in the menu bar means it's running
+
+Add the CLI tools to your PATH (paste into `~/.zshrc`):
+
 ```bash
-sudo dnf install postgresql-server postgresql-contrib -y
-sudo postgresql-setup --initdb
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
+echo 'export PATH="/Applications/Postgres.app/Contents/Versions/latest/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
 ```
 
-### Windows
-Download and run the installer from [postgresql.org](https://www.postgresql.org/download/windows/).
-During install, set the password for the `postgres` user to `postgres`.
-
-### Docker (easiest option — no installation required)
-```bash
-docker run -d \
-  --name postgres \
-  -p 5432:5432 \
-  -e POSTGRES_PASSWORD=postgres \
-  -v postgres-data:/var/lib/postgresql/data \
-  postgres:15-alpine
-```
-
-### Configure user password (native install only)
-
-The app expects user `postgres` with password `postgres`. After installing:
+### Set the postgres user password
 
 ```bash
-# Connect as postgres superuser
-sudo -u postgres psql        # Linux
-psql -U postgres             # macOS / Windows
-
-# Set password
-ALTER USER postgres WITH PASSWORD 'postgres';
-\q
+psql postgres -c "ALTER USER postgres WITH PASSWORD 'postgres';"
 ```
 
 ### Create the 12 databases
@@ -149,22 +103,6 @@ for db in event_db registration_db venue_db attendance_db ticket_db notification
           certificate_db feedback_db leaderboard_db announcement_db resource_db sponsor_db; do
   psql -U postgres -c "CREATE DATABASE $db;"
 done
-```
-
-Or paste in `psql`:
-```sql
-CREATE DATABASE event_db;
-CREATE DATABASE registration_db;
-CREATE DATABASE venue_db;
-CREATE DATABASE attendance_db;
-CREATE DATABASE ticket_db;
-CREATE DATABASE notification_db;
-CREATE DATABASE certificate_db;
-CREATE DATABASE feedback_db;
-CREATE DATABASE leaderboard_db;
-CREATE DATABASE announcement_db;
-CREATE DATABASE resource_db;
-CREATE DATABASE sponsor_db;
 ```
 
 ### Verify
@@ -177,96 +115,37 @@ psql -U postgres -c '\l'
 
 ## RabbitMQ
 
-### macOS
 ```bash
 brew install rabbitmq
 brew services start rabbitmq
 ```
 
 Enable the management UI plugin (run once):
+
 ```bash
 rabbitmq-plugins enable rabbitmq_management
 ```
-
-### Linux (Ubuntu/Debian)
-```bash
-# Install Erlang first (RabbitMQ depends on it)
-sudo apt install erlang -y
-
-# Add RabbitMQ signing key and repo
-curl -fsSL https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/rabbitmq.gpg
-echo "deb [signed-by=/usr/share/keyrings/rabbitmq.gpg] https://packagecloud.io/rabbitmq/rabbitmq-server/ubuntu focal main" | sudo tee /etc/apt/sources.list.d/rabbitmq.list
-
-sudo apt update
-sudo apt install rabbitmq-server -y
-sudo systemctl start rabbitmq-server
-sudo systemctl enable rabbitmq-server
-
-# Enable management UI
-sudo rabbitmq-plugins enable rabbitmq_management
-```
-
-### Linux (RHEL/Fedora)
-```bash
-sudo dnf install erlang rabbitmq-server -y
-sudo systemctl start rabbitmq-server
-sudo systemctl enable rabbitmq-server
-sudo rabbitmq-plugins enable rabbitmq_management
-```
-
-### Windows
-Download and install **Erlang OTP** first from [erlang.org](https://www.erlang.org/downloads),
-then download and run the RabbitMQ installer from [rabbitmq.com](https://www.rabbitmq.com/install-windows.html).
-
-After install, open RabbitMQ Command Prompt (Start Menu) and run:
-```
-rabbitmq-plugins enable rabbitmq_management
-rabbitmq-service start
-```
-
-### Docker (easiest option — no installation required)
-```bash
-docker run -d \
-  --name rabbitmq \
-  -p 5672:5672 \
-  -p 15672:15672 \
-  rabbitmq:3.12-management
-```
-The `-management` image has the UI plugin pre-installed.
 
 ### Verify
-- AMQP port: `telnet localhost 5672` (or `nc -zv localhost 5672`)
-- Management UI: open [http://localhost:15672](http://localhost:15672) → login `guest` / `guest`
+```bash
+# Check the management UI is up
+open http://localhost:15672
+# Login: guest / guest
+```
 
 ---
 
-## Docker (optional — for Docker Compose or running infra in containers)
+## Docker (optional)
 
-### macOS / Windows
-Download and install **Docker Desktop** from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop).
-Docker Compose v2 is bundled.
+Required only if you want to run the full stack via Docker Compose or Kubernetes, or if you prefer Docker-managed PostgreSQL/RabbitMQ instead of Homebrew.
 
-### Linux (Ubuntu/Debian)
 ```bash
-sudo apt update
-sudo apt install ca-certificates curl gnupg -y
-
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
-sudo tee /etc/apt/sources.list.d/docker.list
-
-sudo apt update
-sudo apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
-
-# Allow running docker without sudo
-sudo usermod -aG docker $USER
-newgrp docker
+brew install --cask docker
+open /Applications/Docker.app
 ```
 
-### Verify
+Wait for Docker Desktop to finish starting, then verify:
+
 ```bash
 docker --version
 docker compose version
@@ -293,8 +172,8 @@ openjdk version "21.x.x" ...
 === Maven ===
 Apache Maven 3.x.x ...
 === Node.js ===
-v20.x.x
-9.x.x
+v22.x.x
+10.x.x
 === PostgreSQL ===
 PostgreSQL 15.x ...
 === RabbitMQ ===
@@ -314,45 +193,3 @@ Once all prerequisites are installed and the 12 databases exist:
 
 See [RUNNING_LOCALLY.md](RUNNING_LOCALLY.md) for the full local run guide,
 or [DOCKER.md](DOCKER.md) if you prefer Docker Compose.
-
----
-
-## Node.js (required for the React frontend)
-
-### macOS
-
-**Option A — Homebrew (recommended)**
-```bash
-brew install node@20
-```
-
-**Option B — nvm (manages multiple Node versions)**
-```bash
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-source ~/.zshrc   # or ~/.bashrc
-nvm install 20
-nvm use 20
-```
-
-### Linux (Ubuntu/Debian)
-```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install nodejs -y
-```
-
-### Linux (RHEL/Fedora)
-```bash
-curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
-sudo dnf install nodejs -y
-```
-
-### Windows
-Download and run the LTS installer from [nodejs.org](https://nodejs.org). npm is included.
-
-### Verify
-```bash
-node -v
-# Expected: v20.x.x
-npm -v
-# Expected: 9.x.x or 10.x.x
-```

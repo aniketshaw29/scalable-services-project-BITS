@@ -85,12 +85,23 @@ if [[ "$SKIP_BUILD" == "false" ]]; then
   fi
 
   for svc in "${SERVICES[@]}"; do
-    if [[ ! -f "$svc/Dockerfile" ]]; then
-      warn "No Dockerfile found for $svc — skipping build"
-      continue
+    if [[ "$svc" == "frontend" ]]; then
+      # Frontend has its own self-contained context
+      if [[ ! -f "frontend/Dockerfile" ]]; then
+        warn "No Dockerfile found for frontend — skipping build"
+        continue
+      fi
+      log "  Building ${IMAGE_PREFIX}/frontend:${TAG} ..."
+      docker build -t "${IMAGE_PREFIX}/frontend:${TAG}" frontend/
+    else
+      if [[ ! -f "$svc/Dockerfile" ]]; then
+        warn "No Dockerfile found for $svc — skipping build"
+        continue
+      fi
+      log "  Building ${IMAGE_PREFIX}/${svc}:${TAG} ..."
+      # Build context is project root so Dockerfile can access the parent pom.xml
+      docker build -t "${IMAGE_PREFIX}/${svc}:${TAG}" --file "$svc/Dockerfile" .
     fi
-    log "  Building ${IMAGE_PREFIX}/${svc}:${TAG} ..."
-    docker build -t "${IMAGE_PREFIX}/${svc}:${TAG}" "$svc"
     ok "  ${IMAGE_PREFIX}/${svc}:${TAG} built"
   done
 

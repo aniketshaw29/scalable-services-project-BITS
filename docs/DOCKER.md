@@ -232,22 +232,26 @@ docker compose exec event-db psql -U postgres -d event_db -c '\dt'
 
 ### Java services (14 services)
 
-Every Java service uses the same two-stage Dockerfile:
+Every Java service uses the same two-stage Dockerfile. The build context is the **project root** so Docker can access both the parent `pom.xml` and the service's own sources:
 
 ```dockerfile
-# Stage 1: Build
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN mvn clean package -DskipTests
+# Install parent POM into Maven's local repo so the child module can resolve it
+COPY pom.xml ./pom.xml
+RUN mvn -N install -q
+# Copy and build only this service
+COPY <service>/pom.xml ./<service>/pom.xml
+COPY <service>/src ./<service>/src
+RUN mvn -f <service>/pom.xml clean package -DskipTests
 
-# Stage 2: Runtime (lean JRE only)
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/<service>/target/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
+
+`mvn -N install` installs just the parent POM (no recursion) so child modules can reference it during their build. Without this step Maven cannot resolve the parent and fails with `Non-resolvable parent POM`.
 
 The runtime image is ~200MB vs ~500MB for a full JDK image.
 
