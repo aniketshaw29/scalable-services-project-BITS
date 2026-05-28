@@ -127,7 +127,6 @@ mvn test --threads 4
 ## Test Configuration
 
 Every service has `src/test/resources/application-test.yml` activated via `@ActiveProfiles("test")`. Key settings:
-
 ```yaml
 spring:
   datasource:

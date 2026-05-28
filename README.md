@@ -106,7 +106,7 @@ Results published       ──► Notification Service  (leaderboard notificatio
 
 | Layer | Technology |
 |-------|-----------|
-| Language | Java 17 |
+| Language | Java 21 |
 | Framework | Spring Boot 3.x |
 | Service Discovery | Spring Cloud Netflix Eureka |
 | API Gateway | Spring Cloud Gateway |
