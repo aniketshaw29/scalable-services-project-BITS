@@ -48,10 +48,11 @@ class SponsorServiceIntegrationTest {
     static Long sponsorBId;
 
     private SponsorRequest req(String name, SponsorTier tier) {
+        String slug = name.toLowerCase().replaceAll("[^a-z0-9]", "");
         return SponsorRequest.builder()
                 .name(name).tier(tier)
-                .website("https://" + name.toLowerCase() + ".com")
-                .contactPerson("Contact").contactEmail("contact@" + name.toLowerCase() + ".com")
+                .website("https://" + slug + ".com")
+                .contactPerson("Contact").contactEmail("contact@" + slug + ".com")
                 .build();
     }
 

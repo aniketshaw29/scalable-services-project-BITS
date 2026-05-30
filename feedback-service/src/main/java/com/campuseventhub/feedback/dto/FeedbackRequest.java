@@ -7,11 +7,14 @@ import lombok.*;
 public class FeedbackRequest {
 
     @NotBlank(message = "studentId is required")
+    @Size(max = 50, message = "studentId must not exceed 50 characters")
     private String studentId;
 
+    @Size(max = 200, message = "studentName must not exceed 200 characters")
     private String studentName;
 
     @NotNull(message = "eventId is required")
+    @Positive(message = "eventId must be a positive number")
     private Long eventId;
 
     @NotNull(message = "rating is required")

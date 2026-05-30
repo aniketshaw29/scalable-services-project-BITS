@@ -3,9 +3,11 @@ package com.campuseventhub.sponsor.controller;
 import com.campuseventhub.sponsor.dto.*;
 import com.campuseventhub.sponsor.service.SponsorService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/sponsors")
 @RequiredArgsConstructor
+@Validated
 public class SponsorController {
 
     private final SponsorService sponsorService;
@@ -23,7 +26,8 @@ public class SponsorController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SponsorResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<SponsorResponse> getById(
+            @PathVariable @Positive(message = "id must be a positive number") Long id) {
         return ResponseEntity.ok(sponsorService.getSponsorById(id));
     }
 
@@ -33,22 +37,24 @@ public class SponsorController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SponsorResponse> update(@PathVariable Long id,
-                                                   @Valid @RequestBody SponsorRequest request) {
+    public ResponseEntity<SponsorResponse> update(
+            @PathVariable @Positive(message = "id must be a positive number") Long id,
+            @Valid @RequestBody SponsorRequest request) {
         return ResponseEntity.ok(sponsorService.updateSponsor(id, request));
     }
 
     @PostMapping("/{id}/events/{eventId}")
     public ResponseEntity<EventSponsorResponse> linkToEvent(
-            @PathVariable Long id,
-            @PathVariable Long eventId,
-            @RequestBody(required = false) LinkSponsorRequest request) {
+            @PathVariable @Positive(message = "id must be a positive number") Long id,
+            @PathVariable @Positive(message = "eventId must be a positive number") Long eventId,
+            @Valid @RequestBody(required = false) LinkSponsorRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(sponsorService.linkSponsorToEvent(id, eventId, request));
     }
 
     @GetMapping("/event/{eventId}")
-    public ResponseEntity<List<EventSponsorResponse>> getByEvent(@PathVariable Long eventId) {
+    public ResponseEntity<List<EventSponsorResponse>> getByEvent(
+            @PathVariable @Positive(message = "eventId must be a positive number") Long eventId) {
         return ResponseEntity.ok(sponsorService.getSponsorsByEvent(eventId));
     }
 }

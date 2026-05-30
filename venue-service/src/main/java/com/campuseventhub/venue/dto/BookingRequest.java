@@ -1,6 +1,7 @@
 package com.campuseventhub.venue.dto;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -8,12 +9,13 @@ import java.time.LocalDateTime;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class BookingRequest {
 
-    @NotNull(message = "Event ID is required")
+    @NotNull(message = "eventId is required")
+    @Positive(message = "eventId must be a positive number")
     private Long eventId;
 
-    @NotNull(message = "Start time is required")
+    @NotNull(message = "startTime is required")
     private LocalDateTime startTime;
 
-    @NotNull(message = "End time is required")
+    @NotNull(message = "endTime is required")
     private LocalDateTime endTime;
 }

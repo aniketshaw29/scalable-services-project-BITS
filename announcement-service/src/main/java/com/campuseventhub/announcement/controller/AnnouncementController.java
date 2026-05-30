@@ -5,9 +5,11 @@ import com.campuseventhub.announcement.dto.AnnouncementResponse;
 import com.campuseventhub.announcement.entity.AnnouncementType;
 import com.campuseventhub.announcement.service.AnnouncementService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/announcements")
 @RequiredArgsConstructor
+@Validated
 public class AnnouncementController {
 
     private final AnnouncementService announcementService;
@@ -25,7 +28,8 @@ public class AnnouncementController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AnnouncementResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<AnnouncementResponse> getById(
+            @PathVariable @Positive(message = "id must be a positive number") Long id) {
         return ResponseEntity.ok(announcementService.getAnnouncementById(id));
     }
 
@@ -35,7 +39,8 @@ public class AnnouncementController {
     }
 
     @GetMapping("/event/{eventId}")
-    public ResponseEntity<List<AnnouncementResponse>> getByEvent(@PathVariable Long eventId) {
+    public ResponseEntity<List<AnnouncementResponse>> getByEvent(
+            @PathVariable @Positive(message = "eventId must be a positive number") Long eventId) {
         return ResponseEntity.ok(announcementService.getAnnouncementsByEvent(eventId));
     }
 
