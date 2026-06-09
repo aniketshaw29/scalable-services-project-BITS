@@ -298,3 +298,5 @@ For frontend-only work you can mock the backend by editing `src/api/` files to r
 | PostgreSQL | 5432 |
 | RabbitMQ AMQP | 5672 |
 | RabbitMQ Management | 15672 |
+
+<!-- steps tested on macOS and Ubuntu -->
