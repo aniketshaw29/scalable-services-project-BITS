@@ -193,3 +193,5 @@ Once all prerequisites are installed and the 12 databases exist:
 
 See [RUNNING_LOCALLY.md](RUNNING_LOCALLY.md) for the full local run guide,
 or [DOCKER.md](DOCKER.md) if you prefer Docker Compose.
+
+<!-- install steps verified -->
