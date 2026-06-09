@@ -206,3 +206,5 @@ cat ticket-service/target/surefire-reports/com.campuseventhub.ticket.TicketConsu
 | resource-service | 11 | — | 11 |
 | sponsor-service | 12 | 11 | **23** |
 | **Total** | **135** | **72** | **207** |
+
+<!-- tests reviewed -->
