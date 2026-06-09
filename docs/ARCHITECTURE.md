@@ -430,3 +430,5 @@ spring:
 | RabbitMQ AMQP | 5672 |
 | RabbitMQ Management | 15672 |
 | PostgreSQL (per service) | 5480–5491 |
+
+<!-- reviewed -->
